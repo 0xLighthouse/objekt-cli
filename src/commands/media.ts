@@ -68,10 +68,10 @@ const put = Cli.create("put", {
       .default("mainnet")
       .describe("Network"),
     api: z.string().optional().describe("API base URL"),
-    tier: z
+    storage: z
       .enum(["cached", "arweave", "ipfs"])
       .default("cached")
-      .describe("Storage tier"),
+      .describe("Storage backend"),
     estimate: z.boolean().optional().describe("Show cost estimate without uploading"),
   }),
   alias: { file: "f", ows: "w" },
@@ -138,7 +138,7 @@ const put = Cli.create("put", {
     });
 
     const url = `${getApiUrl(c.options)}/${c.args.key}`;
-    const tierParam = c.options.tier !== "cached" ? `?tier=${c.options.tier}` : "";
+    const tierParam = c.options.storage !== "cached" ? `?tier=${c.options.storage}` : "";
 
     const res = await fetch(`${url}${tierParam}`, {
       method: "PUT",

@@ -73,10 +73,10 @@ header.command("upload", {
       .default("mainnet")
       .describe("Network"),
     ensApi: z.string().optional().describe("ENS API base URL"),
-    tier: z
+    storage: z
       .enum(["cached", "arweave", "ipfs"])
       .default("cached")
-      .describe("Storage tier"),
+      .describe("Storage backend"),
     estimate: z.boolean().optional().describe("Show cost estimate without uploading"),
   }),
   alias: { file: "f", ows: "w" },
@@ -108,7 +108,7 @@ header.command("upload", {
     });
 
     const url = `${getEnsApiUrl(c.options)}/${c.args.name}/h`;
-    const tierParam = c.options.tier !== "cached" ? `?tier=${c.options.tier}` : "";
+    const tierParam = c.options.storage !== "cached" ? `?tier=${c.options.storage}` : "";
 
     const res = await fetch(`${url}${tierParam}`, {
       method: "PUT",

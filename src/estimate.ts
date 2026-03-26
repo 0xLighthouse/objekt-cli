@@ -13,13 +13,13 @@ export async function estimateUpload(options: {
   ensApi?: string;
   api?: string;
   network: string;
-  tier: string;
+  storage: string;
   bytes: number;
   file: string;
 }): Promise<{
   file: string;
   size: string;
-  tier: string;
+  storage: string;
   cost: string;
 }> {
   const baseUrl =
@@ -31,8 +31,8 @@ export async function estimateUpload(options: {
   if (!res.ok) throw new Error("Failed to fetch pricing");
   const pricing = (await res.json()) as PricingResponse;
 
-  const tierInfo = pricing.tiers[options.tier];
-  if (!tierInfo) throw new Error(`Unknown tier: ${options.tier}`);
+  const tierInfo = pricing.tiers[options.storage];
+  if (!tierInfo) throw new Error(`Unknown storage: ${options.storage}`);
 
   const mb = options.bytes / (1024 * 1024);
   const sizeStr =
@@ -51,7 +51,7 @@ export async function estimateUpload(options: {
   return {
     file: options.file,
     size: sizeStr,
-    tier: options.tier,
+    storage: options.storage,
     cost,
   };
 }
