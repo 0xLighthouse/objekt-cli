@@ -2,6 +2,7 @@ import { MEDIA_TYPES } from "@objekt/shared";
 import { Cli, z } from "incur";
 
 import { getEnsApiUrl } from "../api";
+import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
 import { signUpload } from "../sign";
 
@@ -71,32 +72,43 @@ avatar.command("upload", {
   }),
   options: z.object({
     file: z.string().describe("Path to image file"),
-    ows: z.string().describe("OWS wallet name"),
+    ows: z.string().optional().describe("OWS wallet name"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
       .describe("Network"),
     ensApi: z.string().optional().describe("ENS API base URL"),
     tier: z
-      .enum(["cached", "permanent"])
+      .enum(["cached", "arweave", "ipfs"])
       .default("cached")
       .describe("Storage tier"),
+    estimate: z.boolean().optional().describe("Show cost estimate without uploading"),
   }),
   alias: { file: "f", ows: "w" },
-  output: z.object({
-    message: z.string(),
-    storage: z.string(),
-    arweave: z.string().optional(),
-  }),
   examples: [
     {
       args: { name: "nick.eth" },
       options: { file: "./avatar.jpg", ows: "my-wallet" },
       description: "Upload avatar",
     },
+    {
+      args: { name: "nick.eth" },
+      options: { file: "./avatar.jpg", tier: "arweave", estimate: true },
+      description: "Estimate cost",
+    },
   ],
   async run(c) {
-    const { dataURL, bytes } = await readMediaFile(c.options.file, mediaType);
+    const { bytes } = await readMediaFile(c.options.file, mediaType);
+
+    if (c.options.estimate) {
+      return estimateUpload({ ...c.options, bytes: bytes.byteLength });
+    }
+
+    if (!c.options.ows) {
+      return c.error({ code: "NO_WALLET", message: "Provide --ows <wallet> for signing", exitCode: 1 });
+    }
+
+    const { dataURL } = await readMediaFile(c.options.file, mediaType);
 
     const { sig, expiry, unverifiedAddress } = signUpload({
       wallet: c.options.ows,
@@ -106,7 +118,7 @@ avatar.command("upload", {
     });
 
     const url = `${getEnsApiUrl(c.options)}/${c.args.name}`;
-    const tierParam = c.options.tier === "permanent" ? "?tier=permanent" : "";
+    const tierParam = c.options.tier !== "cached" ? `?tier=${c.options.tier}` : "";
 
     const res = await fetch(`${url}${tierParam}`, {
       method: "PUT",

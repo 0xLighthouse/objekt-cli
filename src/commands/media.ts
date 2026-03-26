@@ -1,6 +1,7 @@
 import { Cli, z } from "incur";
 
 import { getApiUrl } from "../api";
+import { estimateUpload } from "../estimate";
 import { getWalletAddress, signUpload } from "../sign";
 
 const get = Cli.create("get", {
@@ -61,16 +62,17 @@ const put = Cli.create("put", {
   }),
   options: z.object({
     file: z.string().describe("Path to file"),
-    ows: z.string().describe("OWS wallet name"),
+    ows: z.string().optional().describe("OWS wallet name"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
       .describe("Network"),
     api: z.string().optional().describe("API base URL"),
     tier: z
-      .enum(["cached", "permanent"])
+      .enum(["cached", "arweave", "ipfs"])
       .default("cached")
       .describe("Storage tier"),
+    estimate: z.boolean().optional().describe("Show cost estimate without uploading"),
   }),
   alias: { file: "f", ows: "w" },
   output: z.object({
@@ -90,6 +92,16 @@ const put = Cli.create("put", {
   async run(c) {
     const { readFile } = await import("node:fs/promises");
     const { extname } = await import("node:path");
+    const { stat } = await import("node:fs/promises");
+
+    if (c.options.estimate) {
+      const fileInfo = await stat(c.options.file);
+      return estimateUpload({ ...c.options, bytes: fileInfo.size });
+    }
+
+    if (!c.options.ows) {
+      return c.error({ code: "NO_WALLET", message: "Provide --ows <wallet> for signing", exitCode: 1 });
+    }
 
     const buffer = await readFile(c.options.file);
     const bytes = new Uint8Array(buffer);
@@ -126,7 +138,7 @@ const put = Cli.create("put", {
     });
 
     const url = `${getApiUrl(c.options)}/${c.args.key}`;
-    const tierParam = c.options.tier === "permanent" ? "?tier=permanent" : "";
+    const tierParam = c.options.tier !== "cached" ? `?tier=${c.options.tier}` : "";
 
     const res = await fetch(`${url}${tierParam}`, {
       method: "PUT",
