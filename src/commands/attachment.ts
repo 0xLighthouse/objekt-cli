@@ -5,7 +5,7 @@ import { getEnsApiUrl } from "../api";
 import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
 import { signUpload } from "../sign";
-import { createPaymentFetch } from "../x402";
+import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
 const mediaType = MEDIA_TYPES.attachment;
 
@@ -126,7 +126,9 @@ attachment.command("upload", {
       return c.error({ code: "UPLOAD_FAILED", message: text, exitCode: 1 });
     }
 
-    return res.json();
+    const data = await res.json();
+    const payment = extractPaymentReceipt(res);
+    return payment ? { ...data, payment } : data;
   },
 });
 

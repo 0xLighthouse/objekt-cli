@@ -1,10 +1,10 @@
-import {
-  getWallet,
-  signTypedData as owsSignTypedData,
-} from "@open-wallet-standard/core";
+import { signTypedData as owsSignTypedData } from "@open-wallet-standard/core";
 import { x402Client } from "@x402/core/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
-import { wrapFetchWithPayment } from "@x402/fetch";
+import {
+  decodePaymentResponseHeader,
+  wrapFetchWithPayment,
+} from "@x402/fetch";
 import type { Hex } from "viem";
 
 import { getWalletAddress } from "./sign";
@@ -39,4 +39,14 @@ export function createPaymentFetch(wallet: string) {
     new ExactEvmScheme(signer),
   );
   return wrapFetchWithPayment(fetch, client);
+}
+
+export function extractPaymentReceipt(res: Response) {
+  const header = res.headers.get("PAYMENT-RESPONSE");
+  if (!header) return undefined;
+  try {
+    return decodePaymentResponseHeader(header);
+  } catch {
+    return { raw: header };
+  }
 }

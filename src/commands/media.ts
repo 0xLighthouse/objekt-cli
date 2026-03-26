@@ -3,7 +3,7 @@ import { Cli, z } from "incur";
 import { getApiUrl } from "../api";
 import { estimateUpload } from "../estimate";
 import { getWalletAddress, signUpload } from "../sign";
-import { createPaymentFetch } from "../x402";
+import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
 const get = Cli.create("get", {
   description: "Get media by key",
@@ -153,7 +153,9 @@ const put = Cli.create("put", {
       return c.error({ code: "UPLOAD_FAILED", message: text, exitCode: 1 });
     }
 
-    return res.json();
+    const data = await res.json();
+    const payment = extractPaymentReceipt(res);
+    return payment ? { ...data, payment } : data;
   },
 });
 
