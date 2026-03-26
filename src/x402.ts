@@ -41,11 +41,23 @@ export function createPaymentFetch(wallet: string) {
   return wrapFetchWithPayment(fetch, client);
 }
 
+const EXPLORER_URLS: Record<string, string> = {
+  "eip155:8453": "https://basescan.org/tx",
+  "eip155:84532": "https://sepolia.basescan.org/tx",
+  "eip155:1": "https://etherscan.io/tx",
+};
+
 export function extractPaymentReceipt(res: Response) {
   const header = res.headers.get("PAYMENT-RESPONSE");
   if (!header) return undefined;
   try {
-    return decodePaymentResponseHeader(header);
+    const decoded = decodePaymentResponseHeader(header) as Record<string, unknown>;
+    const txHash = decoded.txHash as string | undefined;
+    const network = decoded.network as string | undefined;
+    if (txHash && network && EXPLORER_URLS[network]) {
+      decoded.explorer = `${EXPLORER_URLS[network]}/${txHash}`;
+    }
+    return decoded;
   } catch {
     return { raw: header };
   }
