@@ -5,6 +5,7 @@ import { getEnsApiUrl } from "../api";
 import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
 import { signUpload } from "../sign";
+import { createPaymentFetch } from "../x402";
 
 const mediaType = MEDIA_TYPES.cover;
 
@@ -109,8 +110,9 @@ header.command("upload", {
 
     const url = `${getEnsApiUrl(c.options)}/${c.args.name}/h`;
     const tierParam = c.options.storage !== "cached" ? `?tier=${c.options.storage}` : "";
+    const doFetch = c.options.storage !== "cached" ? createPaymentFetch(c.options.ows) : fetch;
 
-    const res = await fetch(`${url}${tierParam}`, {
+    const res = await doFetch(`${url}${tierParam}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),

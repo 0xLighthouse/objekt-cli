@@ -12,9 +12,9 @@ const pricing = Cli.create("pricing", {
       .describe("Network"),
   }),
   output: z.object({
-    tiers: z.record(z.any()),
-    mediaTypes: z.record(z.any()),
-    rateLimits: z.record(z.any()),
+    tiers: z.record(z.string(), z.any()),
+    mediaTypes: z.record(z.string(), z.any()),
+    rateLimits: z.record(z.string(), z.any()),
   }),
   async run(c) {
     const url = `${getEnsApiUrl(c.options)}/pricing`;

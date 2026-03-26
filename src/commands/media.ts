@@ -3,6 +3,7 @@ import { Cli, z } from "incur";
 import { getApiUrl } from "../api";
 import { estimateUpload } from "../estimate";
 import { getWalletAddress, signUpload } from "../sign";
+import { createPaymentFetch } from "../x402";
 
 const get = Cli.create("get", {
   description: "Get media by key",
@@ -139,8 +140,9 @@ const put = Cli.create("put", {
 
     const url = `${getApiUrl(c.options)}/${c.args.key}`;
     const tierParam = c.options.storage !== "cached" ? `?tier=${c.options.storage}` : "";
+    const doFetch = c.options.storage !== "cached" ? createPaymentFetch(c.options.ows!) : fetch;
 
-    const res = await fetch(`${url}${tierParam}`, {
+    const res = await doFetch(`${url}${tierParam}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),
