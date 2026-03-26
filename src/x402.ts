@@ -32,12 +32,19 @@ function createOwsSigner(wallet: string) {
   };
 }
 
+const NETWORKS = [
+  "eip155:8453",  // Base
+  "eip155:1",     // Ethereum
+  "eip155:10",    // Optimism
+  "eip155:42161", // Arbitrum
+] as const;
+
 export function createPaymentFetch(wallet: string) {
   const signer = createOwsSigner(wallet);
-  const client = new x402Client().register(
-    "eip155:8453",
-    new ExactEvmScheme(signer),
-  );
+  const client = new x402Client();
+  for (const network of NETWORKS) {
+    client.register(network, new ExactEvmScheme(signer));
+  }
   return wrapFetchWithPayment(fetch, client);
 }
 
