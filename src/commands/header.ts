@@ -109,7 +109,7 @@ header.command("upload", {
     });
 
     const url = `${getEnsApiUrl(c.options)}/${c.args.name}/h`;
-    const tierParam = c.options.storage !== "cached" ? `?tier=${c.options.storage}` : "";
+    const tierParam = c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
     const doFetch = c.options.storage !== "cached" ? createPaymentFetch(c.options.ows) : fetch;
 
     const res = await doFetch(`${url}${tierParam}`, {

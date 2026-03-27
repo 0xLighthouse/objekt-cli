@@ -9,21 +9,45 @@ import type { Hex } from "viem";
 
 import { getWalletAddress } from "./sign";
 
+// Patch BigInt serialization for x402 compatibility
+if (!(BigInt.prototype as unknown as { toJSON?: () => string }).toJSON) {
+  (BigInt.prototype as unknown as { toJSON: () => string }).toJSON =
+    function () {
+      return this.toString();
+    };
+}
+
 function createOwsSigner(wallet: string) {
   const address = getWalletAddress(wallet);
 
   return {
     address,
-    async signTypedData(message: {
+    async signTypedData(typedData: {
       domain: Record<string, unknown>;
       types: Record<string, unknown>;
       primaryType: string;
       message: Record<string, unknown>;
     }): Promise<Hex> {
+      // OWS requires EIP712Domain in types — infer it from the domain fields
+      const domainTypeMap: Record<string, string> = {
+        name: "string",
+        version: "string",
+        chainId: "uint256",
+        verifyingContract: "address",
+        salt: "bytes32",
+      };
+      const domainTypes = Object.keys(typedData.domain).map((key) => ({
+        name: key,
+        type: domainTypeMap[key] ?? (typeof typedData.domain[key] === "bigint" || typeof typedData.domain[key] === "number" ? "uint256" : "string"),
+      }));
+      const withDomain = {
+        ...typedData,
+        types: { EIP712Domain: domainTypes, ...typedData.types },
+      };
       const result = owsSignTypedData(
         wallet,
         "evm",
-        JSON.stringify(message),
+        JSON.stringify(withDomain),
       );
       return result.signature.startsWith("0x")
         ? (result.signature as Hex)
@@ -34,9 +58,7 @@ function createOwsSigner(wallet: string) {
 
 const NETWORKS = [
   "eip155:8453",  // Base
-  "eip155:1",     // Ethereum
-  "eip155:10",    // Optimism
-  "eip155:42161", // Arbitrum
+  "eip155:84532", // Base Sepolia
 ] as const;
 
 export function createPaymentFetch(wallet: string) {

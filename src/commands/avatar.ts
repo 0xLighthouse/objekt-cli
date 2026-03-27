@@ -119,7 +119,7 @@ avatar.command("upload", {
     });
 
     const url = `${getEnsApiUrl(c.options)}/${c.args.name}`;
-    const tierParam = c.options.storage !== "cached" ? `?tier=${c.options.storage}` : "";
+    const tierParam = c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
     const doFetch = c.options.storage !== "cached" ? createPaymentFetch(c.options.ows) : fetch;
 
     const res = await doFetch(`${url}${tierParam}`, {
@@ -130,7 +130,7 @@ avatar.command("upload", {
 
     if (!res.ok) {
       const text = await res.text();
-      return c.error({ code: "UPLOAD_FAILED", message: text, exitCode: 1 });
+      return c.error({ code: "UPLOAD_FAILED", message: `${res.status}: ${text}`, exitCode: 1 });
     }
 
     const data = await res.json();
