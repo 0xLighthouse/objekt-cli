@@ -16,20 +16,20 @@ pnpm add -g @objekt.sh/cli
 objekt wallet create <name>
 
 # Or import an existing key
-objekt wallet import <name> --privateKey 0x...
+objekt wallet import <name> --private-key 0x...
 ```
 
 ## Upload a file
 
 ```bash
-# Free CDN cache (default, 90-day Cloudflare edge)
+# IPFS pinning (default, $0.10/MB, 12-month guarantee)
 objekt put <file> -w <wallet>
 
 # Permanent Arweave storage (~$0.09/MB, one-time payment)
 objekt put <file> -w <wallet> --storage arweave
 
-# IPFS pinning ($0.10/MB, 12-month guarantee)
-objekt put <file> -w <wallet> --storage ipfs
+# Free CDN cache (90-day Cloudflare edge)
+objekt put <file> -w <wallet> --storage cdn
 
 # Estimate cost before committing
 objekt put <file> -w <wallet> --storage arweave --estimate
@@ -37,7 +37,7 @@ objekt put <file> -w <wallet> --storage arweave --estimate
 
 `--key` overrides the storage key (defaults to the filename).
 
-Returns JSON: `{ url, storage, payment? }` — payment includes tx hash and block explorer link.
+Returns JSON: `{ name, kind, bytes, uri?, permalink, payment? }` — payment includes tx hash and explorer URL.
 
 ## Retrieve a file
 
@@ -63,7 +63,7 @@ objekt ens avatar upload <ens-name> -f <file> -w <wallet> [--storage arweave|ipf
 ```bash
 objekt wallet list
 objekt wallet create <name>
-objekt wallet import <name> --privateKey 0x...
+objekt wallet import <name> --private-key 0x...
 ```
 
 ## Networks
