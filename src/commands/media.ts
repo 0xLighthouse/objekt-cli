@@ -141,9 +141,7 @@ const put = Cli.create("put", {
     const tierParam =
       c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
     const doFetch =
-      c.options.storage !== "cdn"
-        ? createPaymentFetch(c.options.ows!)
-        : fetch;
+      c.options.storage !== "cdn" ? createPaymentFetch(c.options.ows!) : fetch;
 
     const res = await doFetch(`${url}${tierParam}`, {
       method: "PUT",
