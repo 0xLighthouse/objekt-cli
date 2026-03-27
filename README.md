@@ -148,7 +148,9 @@ objekt ens avatar upload 1a35e1.eth -f ./avatar.png -w my-wallet --storage arwea
 
 ## Testing
 
-Use `--testnet` to test against the staging environment. Payments settle in USDC on Base Sepolia:
+Use `--testnet` to test against the staging environment. Payments settle in USDC on Base Sepolia.
+
+Get testnet USDC from the [Circle faucet](https://faucet.circle.com/).
 
 ```bash
 objekt put ./doc.pdf -w my-wallet --storage ipfs --testnet
