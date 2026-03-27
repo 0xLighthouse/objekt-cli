@@ -79,7 +79,9 @@ export function createPaymentFetch(wallet: string, testnet = false) {
   return wrapFetchWithPayment(fetch, client);
 }
 
-export function extractPaymentReceipt(res: Response) {
+export function extractPaymentReceipt(
+  res: Response,
+): { txHash: string; explorerUrl: string } | undefined {
   if (!httpClient) return undefined;
   try {
     const settlement = httpClient.getPaymentSettleResponse((name: string) =>
@@ -92,10 +94,12 @@ export function extractPaymentReceipt(res: Response) {
       result.txHash ??
       result.transactionHash) as string | undefined;
     const network = result.network as string | undefined;
-    if (txHash && network && EXPLORER_URLS[network]) {
-      result.explorer = `${EXPLORER_URLS[network]}/${txHash}`;
-    }
-    return result;
+    if (!txHash || !network || !EXPLORER_URLS[network]) return undefined;
+
+    return {
+      txHash,
+      explorerUrl: `${EXPLORER_URLS[network]}/${txHash}`,
+    };
   } catch {
     return undefined;
   }

@@ -83,25 +83,38 @@ const put = Cli.create("put", {
   }),
   alias: { key: "k", ows: "w" },
   output: z.object({
-    message: z.string(),
-    id: z.string().optional(),
-    url: z.string().optional(),
-    storage: z.string(),
-    arweave: z.string().optional(),
-    arweaveUrl: z.string().optional(),
-    ipfs: z.string().optional(),
-    ipfsUrl: z.string().optional(),
+    name: z.string(),
+    kind: z.string(),
+    bytes: z.number(),
+    uri: z.string().optional(),
+    permalink: z.string(),
+    payment: z
+      .object({
+        txHash: z.string(),
+        explorerUrl: z.string(),
+      })
+      .optional(),
   }),
   examples: [
     {
       args: { file: "./image.png" },
       options: { ows: "my-wallet" },
-      description: "Upload with auto-detected key",
+      description: "Upload to CDN (free, 90-day cache)",
     },
     {
       args: { file: "./image.png" },
-      options: { key: "proposals/media", ows: "my-wallet", storage: "arweave" },
-      description: "Upload with explicit key to Arweave",
+      options: { ows: "my-wallet", storage: "ipfs" },
+      description: "Pin to IPFS (paid, 12-month guarantee)",
+    },
+    {
+      args: { file: "./image.png" },
+      options: { ows: "my-wallet", storage: "arweave" },
+      description: "Upload to Arweave (paid, permanent)",
+    },
+    {
+      args: { file: "./image.png" },
+      options: { ows: "my-wallet", storage: "ipfs", testnet: true },
+      description: "Test upload on Base Sepolia (USDC testnet)",
     },
   ],
   async run(c) {
