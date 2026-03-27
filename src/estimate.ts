@@ -13,6 +13,7 @@ export async function estimateUpload(options: {
   ensApi?: string;
   api?: string;
   network: string;
+  testnet?: boolean;
   storage: string;
   bytes: number;
   file: string;
