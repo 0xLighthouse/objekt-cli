@@ -1,8 +1,8 @@
 name: Publish to npm
 
 on:
-  push:
-    branches: [main, develop]
+  release:
+    types: [published]
 
 jobs:
   publish:
@@ -21,15 +21,15 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
 
-      - run: pnpm install --no-frozen-lockfile
+      - name: Download release tarball
+        run: gh release download "${{ github.event.release.tag_name }}" --pattern "*.tgz"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Publish canary
-        if: github.ref == 'refs/heads/develop'
-        run: |
-          BASE=$(node -p "require('./package.json').version")
-          npm version "${BASE}-canary.${{ github.run_number }}" --no-git-tag-version
-          pnpm publish --provenance --access public --no-git-checks --tag canary
+        if: github.event.release.prerelease
+        run: pnpm publish *.tgz --provenance --access public --no-git-checks --tag canary
 
       - name: Publish latest
-        if: github.ref == 'refs/heads/main'
-        run: pnpm publish --provenance --access public --no-git-checks
+        if: "!github.event.release.prerelease"
+        run: pnpm publish *.tgz --provenance --access public --no-git-checks
