@@ -1,4 +1,4 @@
-# objekt
+# [objekt.sh](https://objekt.sh)
 
 Upload media to IPFS and Arweave. Pay with USDC. No accounts, no API keys — just a wallet.
 
