@@ -88,6 +88,7 @@ const put = Cli.create("put", {
     url: z.string().optional(),
     storage: z.string(),
     arweave: z.string().optional(),
+    arweaveUrl: z.string().optional(),
     ipfs: z.string().optional(),
     ipfsUrl: z.string().optional(),
   }),
