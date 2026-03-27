@@ -1,3 +1,4 @@
+import { MIME_MAP } from "@objekt/shared";
 import { Cli, z } from "incur";
 
 import { getApiUrl } from "../api";
@@ -108,16 +109,7 @@ const put = Cli.create("put", {
     const bytes = new Uint8Array(buffer);
     const ext = extname(c.options.file).toLowerCase();
 
-    const mimeMap: Record<string, string> = {
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".png": "image/png",
-      ".webp": "image/webp",
-      ".gif": "image/gif",
-      ".svg": "image/svg+xml",
-      ".pdf": "application/pdf",
-    };
-    const mime = mimeMap[ext];
+    const mime = MIME_MAP[ext];
     if (!mime) {
       return c.error({
         code: "UNSUPPORTED_TYPE",
