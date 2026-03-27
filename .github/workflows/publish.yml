@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # required for npm provenance
+      id-token: write # required for Trusted Publishing + provenance
     steps:
       - uses: actions/checkout@v4
 
@@ -29,11 +29,7 @@ jobs:
           BASE=$(node -p "require('./package.json').version")
           npm version "${BASE}-canary.${{ github.run_number }}" --no-git-tag-version
           pnpm publish --provenance --access public --no-git-checks --tag canary
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish latest
         if: github.ref == 'refs/heads/main'
         run: pnpm publish --provenance --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
