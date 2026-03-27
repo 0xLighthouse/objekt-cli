@@ -40,14 +40,14 @@ objekt wallet create my-wallet
 # Check current pricing
 objekt pricing
 
-# Upload a file to IPFS
-objekt put ./doc.pdf -w my-wallet --storage ipfs
+# Upload a file to IPFS (default)
+objekt put ./doc.pdf -w my-wallet
 
 # Upload permanently to Arweave
 objekt put ./doc.pdf -w my-wallet --storage arweave
 
-# Free CDN cache (default)
-objekt put ./doc.pdf -w my-wallet
+# Free CDN cache
+objekt put ./doc.pdf -w my-wallet --storage cdn
 ```
 
 ---
