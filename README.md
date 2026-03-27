@@ -96,23 +96,34 @@ objekt put ./doc.pdf -w my-wallet --storage arweave --estimate
 
 ---
 
-## Payment receipts
+## Response
 
-Paid uploads return a JSON receipt with the on-chain transaction:
+Every upload returns a consistent shape:
 
 ```json
 {
-  "url": "https://...",
-  "storage": "arweave",
+  "name": "doc.pdf",
+  "kind": "application/pdf",
+  "bytes": 142087,
+  "uri": "ar://BzIbGE9Nl6WqlyFo6wkCWAu9f0PnmuD3Sqk_2EWatu0",
+  "permalink": "https://ar.objekt.sh/BzIbGE9Nl6WqlyFo6wkCWAu9f0PnmuD3Sqk_2EWatu0",
   "payment": {
-    "success": true,
-    "transaction": "0xfc88c3...",
-    "explorer": "https://basescan.org/tx/0xfc88c3..."
+    "txHash": "0xfc88c3...",
+    "explorerUrl": "https://basescan.org/tx/0xfc88c3..."
   }
 }
 ```
 
-The transaction is final. If the upload fails after payment, the receipt is your proof.
+| Field | Description |
+|-------|-------------|
+| `uri` | Protocol URI (`ar://`, `ipfs://`) — omitted for CDN |
+| `permalink` | Gateway URL to access the content |
+| `payment` | On-chain USDC receipt — omitted for free CDN tier |
+
+Permalinks resolve to your content via objekt.sh gateways:
+- `ar.objekt.sh/:txId` — Arweave content
+- `ipfs.objekt.sh/:cid` — IPFS content
+- `api.objekt.sh/:key` — CDN cache
 
 ---
 
@@ -135,9 +146,17 @@ objekt ens avatar upload 1a35e1.eth -f ./avatar.png -w my-wallet --storage arwea
 
 ---
 
+## Testing
+
+Use `--testnet` to test against the staging environment. Payments settle in USDC on Base Sepolia:
+
+```bash
+objekt put ./doc.pdf -w my-wallet --storage ipfs --testnet
+```
+
 ## Networks
 
-`--network mainnet` (default) or `--network sepolia` for testnet.
+`--network mainnet` (default) or `--network sepolia` for ENS on testnet.
 
 ---
 
