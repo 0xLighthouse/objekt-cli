@@ -23,7 +23,7 @@ export function createEnsMediaCommand({
   cli.command("get", {
     description: `Download ${name}`,
     args: z.object({
-      name: z.string().describe("ENS name (e.g. nick.eth)"),
+      name: z.string().describe("ENS name (e.g. 1a35e1.eth)"),
     }),
     options: z.object({
       network: z
@@ -69,7 +69,7 @@ export function createEnsMediaCommand({
   cli.command("upload", {
     description: `Upload ${name}`,
     args: z.object({
-      name: z.string().describe("ENS name (e.g. nick.eth)"),
+      name: z.string().describe("ENS name (e.g. 1a35e1.eth)"),
     }),
     options: z.object({
       file: z.string().describe("Path to image file"),

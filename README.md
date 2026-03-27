@@ -130,7 +130,7 @@ objekt get <key> --output ./file.pdf
 Upload avatars and header images for ENS names:
 
 ```bash
-objekt ens avatar upload nick.eth -f ./avatar.png -w my-wallet --storage arweave
+objekt ens avatar upload 1a35e1.eth -f ./avatar.png -w my-wallet --storage arweave
 ```
 
 ---
