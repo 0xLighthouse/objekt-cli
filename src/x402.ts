@@ -14,14 +14,12 @@ if (!(BigInt.prototype as unknown as { toJSON?: () => string }).toJSON) {
     };
 }
 
-const NETWORKS = [
-  "eip155:8453", // Base
-  "eip155:84532", // Base Sepolia
-] as const;
+const BASE_MAINNET = "eip155:8453";
+const BASE_SEPOLIA = "eip155:84532";
 
 const EXPLORER_URLS: Record<string, string> = {
-  "eip155:8453": "https://basescan.org/tx",
-  "eip155:84532": "https://sepolia.basescan.org/tx",
+  [BASE_MAINNET]: "https://basescan.org/tx",
+  [BASE_SEPOLIA]: "https://sepolia.basescan.org/tx",
   "eip155:1": "https://etherscan.io/tx",
   base: "https://basescan.org/tx",
   "base-sepolia": "https://sepolia.basescan.org/tx",
@@ -72,12 +70,11 @@ function createOwsSigner(wallet: string) {
 
 let httpClient: x402HTTPClient | null = null;
 
-export function createPaymentFetch(wallet: string) {
+export function createPaymentFetch(wallet: string, testnet = false) {
   const signer = createOwsSigner(wallet);
   const client = new x402Client();
-  for (const network of NETWORKS) {
-    client.register(network, new ExactEvmScheme(signer));
-  }
+  const network = testnet ? BASE_SEPOLIA : BASE_MAINNET;
+  client.register(network, new ExactEvmScheme(signer));
   httpClient = new x402HTTPClient(client);
   return wrapFetchWithPayment(fetch, client);
 }

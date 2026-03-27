@@ -10,6 +10,7 @@ const pricing = Cli.create("pricing", {
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
       .describe("Network"),
+    testnet: z.boolean().default(false).describe("Use testnet"),
   }),
   output: z.object({
     tiers: z.record(z.string(), z.any()),

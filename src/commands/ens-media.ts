@@ -30,6 +30,7 @@ export function createEnsMediaCommand({
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
         .describe("Network"),
+      testnet: z.boolean().default(false).describe("Use testnet"),
       ensApi: z.string().optional().describe("ENS API base URL"),
       output: z.string().optional().describe("Save to file path"),
     }),
@@ -80,6 +81,7 @@ export function createEnsMediaCommand({
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
         .describe("Network"),
+      testnet: z.boolean().default(false).describe("Use testnet"),
       ensApi: z.string().optional().describe("ENS API base URL"),
       storage: z
         .enum(["cdn", "arweave", "ipfs"])
@@ -119,7 +121,7 @@ export function createEnsMediaCommand({
       const storageParam =
         c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
       const doFetch =
-        c.options.storage !== "cdn" ? createPaymentFetch(c.options.ows) : fetch;
+        c.options.storage !== "cdn" ? createPaymentFetch(c.options.ows, c.options.testnet) : fetch;
 
       const res = await doFetch(`${url}${storageParam}`, {
         method: "PUT",
