@@ -28,8 +28,8 @@ jobs:
 
       - name: Publish canary
         if: github.event.release.prerelease
-        run: pnpm publish *.tgz --provenance --access public --no-git-checks --tag canary
+        run: npm publish *.tgz --provenance --access public --tag canary
 
       - name: Publish latest
         if: "!github.event.release.prerelease"
-        run: pnpm publish *.tgz --provenance --access public --no-git-checks
+        run: npm publish *.tgz --provenance --access public
