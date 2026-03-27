@@ -71,8 +71,8 @@ const put = Cli.create("put", {
       .describe("Network"),
     api: z.string().optional().describe("API base URL"),
     storage: z
-      .enum(["cached", "arweave", "ipfs"])
-      .default("cached")
+      .enum(["cdn", "arweave", "ipfs"])
+      .default("cdn")
       .describe("Storage backend"),
     estimate: z
       .boolean()
@@ -139,9 +139,9 @@ const put = Cli.create("put", {
 
     const url = `${getApiUrl(c.options)}/${c.args.key}`;
     const tierParam =
-      c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
+      c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
     const doFetch =
-      c.options.storage !== "cached"
+      c.options.storage !== "cdn"
         ? createPaymentFetch(c.options.ows!)
         : fetch;
 

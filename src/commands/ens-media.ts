@@ -82,8 +82,8 @@ export function createEnsMediaCommand({
         .describe("Network"),
       ensApi: z.string().optional().describe("ENS API base URL"),
       storage: z
-        .enum(["cached", "arweave", "ipfs"])
-        .default("cached")
+        .enum(["cdn", "arweave", "ipfs"])
+        .default("cdn")
         .describe(
           "Storage: cached (free), arweave (permanent, paid), ipfs (12mo, paid)",
         ),
@@ -117,9 +117,9 @@ export function createEnsMediaCommand({
 
       const url = `${getEnsApiUrl(c.options)}/${c.args.name}${pathSuffix}`;
       const storageParam =
-        c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
+        c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
       const doFetch =
-        c.options.storage !== "cached"
+        c.options.storage !== "cdn"
           ? createPaymentFetch(c.options.ows)
           : fetch;
 

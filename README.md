@@ -32,6 +32,9 @@ objekt put proposals/media -f ./doc.pdf -w my-wallet --storage ipfs
 
 # Upload permanently to Arweave
 objekt put proposals/media -f ./doc.pdf -w my-wallet --storage arweave
+
+# Free CDN cache (default)
+objekt put proposals/media -f ./doc.pdf -w my-wallet
 ```
 
 ---
@@ -62,7 +65,7 @@ objekt put <key> -f <file> -w <wallet> [--storage cached|arweave|ipfs]
 
 | Tier | Cost | Durability |
 |------|------|-----------|
-| `cached` | Free | 90-day edge cache |
+| `cdn` | Free | 90-day Cloudflare edge cache |
 | `arweave` | ~$0.09/MB | Permanent — one payment, stored forever |
 | `ipfs` | $0.10/MB | 12-month pinning guarantee |
 
