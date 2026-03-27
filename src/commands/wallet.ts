@@ -6,7 +6,7 @@ import {
 import { Cli, z } from "incur";
 
 const wallet = Cli.create("wallet", {
-  description: "Manage signing wallets (OWS)",
+  description: "Manage signing wallets. Required before uploading. Keys are encrypted locally via OWS (https://openwallet.sh).",
 });
 
 wallet.command("create", {
@@ -36,7 +36,7 @@ wallet.command("create", {
 });
 
 wallet.command("import", {
-  description: "Import a wallet from a private key",
+  description: "Import an existing private key into a named wallet. The EVM address is preserved.",
   args: z.object({
     name: z.string().describe("Wallet name"),
   }),

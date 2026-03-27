@@ -72,7 +72,7 @@ export function createEnsMediaCommand({
     }),
     options: z.object({
       file: z.string().describe("Path to image file"),
-      ows: z.string().optional().describe("OWS wallet name"),
+      ows: z.string().optional().describe("OWS wallet name (required unless --estimate)"),
       network: z
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
@@ -81,11 +81,11 @@ export function createEnsMediaCommand({
       storage: z
         .enum(["cached", "arweave", "ipfs"])
         .default("cached")
-        .describe("Storage backend"),
+        .describe("Storage: cached (free), arweave (permanent, paid), ipfs (12mo, paid)"),
       estimate: z
         .boolean()
         .optional()
-        .describe("Show cost estimate without uploading"),
+        .describe("Show cost estimate without uploading. No wallet needed."),
     }),
     alias: { file: "f", ows: "w" },
     async run(c) {
