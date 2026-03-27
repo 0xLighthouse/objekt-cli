@@ -1,5 +1,5 @@
 import { signTypedData as owsSignTypedData } from "@open-wallet-standard/core";
-import { x402Client } from "@x402/core/client";
+import { x402Client, x402HTTPClient } from "@x402/core/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { wrapFetchWithPayment } from "@x402/fetch";
 import type { Hex } from "viem";
@@ -36,7 +36,6 @@ function createOwsSigner(wallet: string) {
       primaryType: string;
       message: Record<string, unknown>;
     }): Promise<Hex> {
-      // OWS requires EIP712Domain in types — infer from domain fields
       const domainTypeMap: Record<string, string> = {
         name: "string",
         version: "string",
@@ -64,29 +63,34 @@ function createOwsSigner(wallet: string) {
   };
 }
 
+let httpClient: x402HTTPClient | null = null;
+
 export function createPaymentFetch(wallet: string) {
   const signer = createOwsSigner(wallet);
   const client = new x402Client();
   for (const network of NETWORKS) {
     client.register(network, new ExactEvmScheme(signer));
   }
+  httpClient = new x402HTTPClient(client);
   return wrapFetchWithPayment(fetch, client);
 }
 
 export function extractPaymentReceipt(res: Response) {
-  const header = res.headers.get("PAYMENT-RESPONSE");
-  if (!header) return undefined;
+  if (!httpClient) return undefined;
   try {
-    const decoded = JSON.parse(
-      Buffer.from(header, "base64").toString(),
-    ) as Record<string, unknown>;
-    const txHash = (decoded.txHash ?? decoded.transactionHash) as string | undefined;
-    const network = decoded.network as string | undefined;
+    const settlement = httpClient.getPaymentSettleResponse(
+      (name: string) => res.headers.get(name),
+    );
+    if (!settlement) return undefined;
+
+    const result = settlement as Record<string, unknown>;
+    const txHash = (result.txHash ?? result.transactionHash) as string | undefined;
+    const network = result.network as string | undefined;
     if (txHash && network && EXPLORER_URLS[network]) {
-      decoded.explorer = `${EXPLORER_URLS[network]}/${txHash}`;
+      result.explorer = `${EXPLORER_URLS[network]}/${txHash}`;
     }
-    return decoded;
+    return result;
   } catch {
-    return { raw: header };
+    return undefined;
   }
 }
