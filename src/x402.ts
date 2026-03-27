@@ -1,10 +1,7 @@
 import { signTypedData as owsSignTypedData } from "@open-wallet-standard/core";
 import { x402Client } from "@x402/core/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
-import {
-  decodePaymentResponseHeader,
-  wrapFetchWithPayment,
-} from "@x402/fetch";
+import { wrapFetchWithPayment } from "@x402/fetch";
 import type { Hex } from "viem";
 
 import { getWalletAddress } from "./sign";
@@ -17,6 +14,17 @@ if (!(BigInt.prototype as unknown as { toJSON?: () => string }).toJSON) {
     };
 }
 
+const NETWORKS = [
+  "eip155:8453",  // Base
+  "eip155:84532", // Base Sepolia
+] as const;
+
+const EXPLORER_URLS: Record<string, string> = {
+  "eip155:8453": "https://basescan.org/tx",
+  "eip155:84532": "https://sepolia.basescan.org/tx",
+  "eip155:1": "https://etherscan.io/tx",
+};
+
 function createOwsSigner(wallet: string) {
   const address = getWalletAddress(wallet);
 
@@ -28,7 +36,7 @@ function createOwsSigner(wallet: string) {
       primaryType: string;
       message: Record<string, unknown>;
     }): Promise<Hex> {
-      // OWS requires EIP712Domain in types — infer it from the domain fields
+      // OWS requires EIP712Domain in types — infer from domain fields
       const domainTypeMap: Record<string, string> = {
         name: "string",
         version: "string",
@@ -56,11 +64,6 @@ function createOwsSigner(wallet: string) {
   };
 }
 
-const NETWORKS = [
-  "eip155:8453",  // Base
-  "eip155:84532", // Base Sepolia
-] as const;
-
 export function createPaymentFetch(wallet: string) {
   const signer = createOwsSigner(wallet);
   const client = new x402Client();
@@ -70,18 +73,14 @@ export function createPaymentFetch(wallet: string) {
   return wrapFetchWithPayment(fetch, client);
 }
 
-const EXPLORER_URLS: Record<string, string> = {
-  "eip155:8453": "https://basescan.org/tx",
-  "eip155:84532": "https://sepolia.basescan.org/tx",
-  "eip155:1": "https://etherscan.io/tx",
-};
-
 export function extractPaymentReceipt(res: Response) {
   const header = res.headers.get("PAYMENT-RESPONSE");
   if (!header) return undefined;
   try {
-    const decoded = decodePaymentResponseHeader(header) as Record<string, unknown>;
-    const txHash = decoded.txHash as string | undefined;
+    const decoded = JSON.parse(
+      Buffer.from(header, "base64").toString(),
+    ) as Record<string, unknown>;
+    const txHash = (decoded.txHash ?? decoded.transactionHash) as string | undefined;
     const network = decoded.network as string | undefined;
     if (txHash && network && EXPLORER_URLS[network]) {
       decoded.explorer = `${EXPLORER_URLS[network]}/${txHash}`;
