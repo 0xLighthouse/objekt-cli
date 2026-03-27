@@ -19,7 +19,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org
 
       - name: Download release tarball
         run: gh release download "${{ github.event.release.tag_name }}" --pattern "*.tgz"
