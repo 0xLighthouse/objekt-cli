@@ -120,11 +120,13 @@ const put = Cli.create("put", {
     if (!c.options.ows) {
       return c.error({
         code: "NO_WALLET",
-        message: "Provide --ows <wallet> — uploads are signed with your wallet to prove ownership",
+        message:
+          "Provide --ows <wallet> — uploads are signed with your wallet to prove ownership",
         exitCode: 1,
       });
     }
 
+    const { ows } = c.options;
     const buffer = await readFile(c.args.file);
     const bytes = new Uint8Array(buffer);
     const ext = extname(c.args.file).toLowerCase();
@@ -154,7 +156,9 @@ const put = Cli.create("put", {
     const tierParam =
       c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
     const doFetch =
-      c.options.storage !== "cdn" ? createPaymentFetch(c.options.ows!, c.options.testnet) : fetch;
+      c.options.storage !== "cdn"
+        ? createPaymentFetch(ows, c.options.testnet)
+        : fetch;
 
     const res = await doFetch(`${url}${tierParam}`, {
       method: "PUT",

@@ -105,7 +105,8 @@ export function createEnsMediaCommand({
       if (!c.options.ows) {
         return c.error({
           code: "NO_WALLET",
-          message: "Provide --ows <wallet> — uploads are signed with your wallet to prove ownership",
+          message:
+            "Provide --ows <wallet> — uploads are signed with your wallet to prove ownership",
           exitCode: 1,
         });
       }
@@ -121,7 +122,9 @@ export function createEnsMediaCommand({
       const storageParam =
         c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
       const doFetch =
-        c.options.storage !== "cdn" ? createPaymentFetch(c.options.ows, c.options.testnet) : fetch;
+        c.options.storage !== "cdn"
+          ? createPaymentFetch(c.options.ows, c.options.testnet)
+          : fetch;
 
       const res = await doFetch(`${url}${storageParam}`, {
         method: "PUT",
