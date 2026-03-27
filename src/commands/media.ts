@@ -58,12 +58,12 @@ const get = Cli.create("get", {
 });
 
 const put = Cli.create("put", {
-  description: "Upload media by key",
+  description: "Upload a file",
   args: z.object({
-    key: z.string().describe("Media key"),
+    file: z.string().describe("Path to file"),
   }),
   options: z.object({
-    file: z.string().describe("Path to file"),
+    key: z.string().optional().describe("Storage key (defaults to filename)"),
     ows: z.string().optional().describe("OWS wallet name"),
     network: z
       .enum(["mainnet", "sepolia"])
@@ -79,7 +79,7 @@ const put = Cli.create("put", {
       .optional()
       .describe("Show cost estimate without uploading"),
   }),
-  alias: { file: "f", ows: "w" },
+  alias: { key: "k", ows: "w" },
   output: z.object({
     message: z.string(),
     id: z.string().optional(),
@@ -89,19 +89,30 @@ const put = Cli.create("put", {
   }),
   examples: [
     {
-      args: { key: "proposals/media" },
-      options: { file: "./image.png", ows: "my-wallet" },
-      description: "Upload proposal media",
+      args: { file: "./image.png" },
+      options: { ows: "my-wallet" },
+      description: "Upload with auto-detected key",
+    },
+    {
+      args: { file: "./image.png" },
+      options: { key: "proposals/media", ows: "my-wallet", storage: "arweave" },
+      description: "Upload with explicit key to Arweave",
     },
   ],
   async run(c) {
     const { readFile } = await import("node:fs/promises");
-    const { extname } = await import("node:path");
+    const { basename, extname } = await import("node:path");
     const { stat } = await import("node:fs/promises");
 
+    const resolvedKey = c.options.key ?? basename(c.args.file);
+
     if (c.options.estimate) {
-      const fileInfo = await stat(c.options.file);
-      return estimateUpload({ ...c.options, bytes: fileInfo.size });
+      const fileInfo = await stat(c.args.file);
+      return estimateUpload({
+        ...c.options,
+        file: c.args.file,
+        bytes: fileInfo.size,
+      });
     }
 
     if (!c.options.ows) {
@@ -112,9 +123,9 @@ const put = Cli.create("put", {
       });
     }
 
-    const buffer = await readFile(c.options.file);
+    const buffer = await readFile(c.args.file);
     const bytes = new Uint8Array(buffer);
-    const ext = extname(c.options.file).toLowerCase();
+    const ext = extname(c.args.file).toLowerCase();
 
     const mime = MIME_MAP[ext];
     if (!mime) {
@@ -133,11 +144,11 @@ const put = Cli.create("put", {
     const { sig, expiry, unverifiedAddress } = signUpload({
       wallet: c.options.ows,
       name: address,
-      uploadType: c.args.key,
+      uploadType: resolvedKey,
       bytes,
     });
 
-    const url = `${getApiUrl(c.options)}/${c.args.key}`;
+    const url = `${getApiUrl(c.options)}/${resolvedKey}`;
     const tierParam =
       c.options.storage !== "cdn" ? `?storage=${c.options.storage}` : "";
     const doFetch =

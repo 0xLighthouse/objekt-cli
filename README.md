@@ -41,13 +41,13 @@ objekt wallet create my-wallet
 objekt pricing
 
 # Upload a file to IPFS
-objekt put proposals/media -f ./doc.pdf -w my-wallet --storage ipfs
+objekt put ./doc.pdf -w my-wallet --storage ipfs
 
 # Upload permanently to Arweave
-objekt put proposals/media -f ./doc.pdf -w my-wallet --storage arweave
+objekt put ./doc.pdf -w my-wallet --storage arweave
 
 # Free CDN cache (default)
-objekt put proposals/media -f ./doc.pdf -w my-wallet
+objekt put ./doc.pdf -w my-wallet
 ```
 
 ---
@@ -69,10 +69,10 @@ The wallet address is a standard EVM address — the same key you use anywhere e
 ## Uploading
 
 ```bash
-objekt put <key> -f <file> -w <wallet> [--storage cdn|arweave|ipfs]
+objekt put <file> -w <wallet> [-k <key>] [--storage cdn|arweave|ipfs]
 ```
 
-`key` is the path used to address the file (e.g. `proposals/0xabc/cover`).
+`file` is the path to upload. `--key` overrides the storage key (defaults to the filename).
 
 **Storage tiers:**
 
@@ -91,7 +91,7 @@ objekt pricing
 **Estimate before committing:**
 
 ```bash
-objekt put proposals/media -f ./doc.pdf -w my-wallet --storage arweave --estimate
+objekt put ./doc.pdf -w my-wallet --storage arweave --estimate
 ```
 
 ---

@@ -23,19 +23,19 @@ objekt wallet import <name> --privateKey 0x...
 
 ```bash
 # Free CDN cache (default, 90-day Cloudflare edge)
-objekt put <key> -f <file> -w <wallet>
+objekt put <file> -w <wallet>
 
 # Permanent Arweave storage (~$0.09/MB, one-time payment)
-objekt put <key> -f <file> -w <wallet> --storage arweave
+objekt put <file> -w <wallet> --storage arweave
 
 # IPFS pinning ($0.10/MB, 12-month guarantee)
-objekt put <key> -f <file> -w <wallet> --storage ipfs
+objekt put <file> -w <wallet> --storage ipfs
 
 # Estimate cost before committing
-objekt put <key> -f <file> -w <wallet> --storage arweave --estimate
+objekt put <file> -w <wallet> --storage arweave --estimate
 ```
 
-`key` addresses the file (e.g. `proposals/0xabc/cover`).
+`--key` overrides the storage key (defaults to the filename).
 
 Returns JSON: `{ url, storage, payment? }` — payment includes tx hash and block explorer link.
 
