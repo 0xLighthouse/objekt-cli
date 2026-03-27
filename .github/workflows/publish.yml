@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          registry-url: https://registry.npmjs.org
 
       - name: Download release tarball
         run: gh release download "${{ github.event.release.tag_name }}" --pattern "*.tgz"
@@ -28,7 +29,11 @@ jobs:
       - name: Publish canary
         if: github.event.release.prerelease
         run: npm publish *.tgz --provenance --access public --tag canary
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish latest
         if: "!github.event.release.prerelease"
         run: npm publish *.tgz --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
