@@ -8,6 +8,19 @@ pnpm add -g @objekt.sh/cli
 
 ---
 
+## Agent-ready
+
+All commands return structured JSON. The CLI is discoverable by AI agents out of the box:
+
+```bash
+objekt --llms       # machine-readable command manifest
+objekt --schema     # JSON Schema for every command
+```
+
+Agents can upload files, check pricing, and manage wallets without human intervention.
+
+---
+
 ## How it works
 
 Two primitives power everything:
@@ -56,7 +69,7 @@ The wallet address is a standard EVM address — the same key you use anywhere e
 ## Uploading
 
 ```bash
-objekt put <key> -f <file> -w <wallet> [--storage cached|arweave|ipfs]
+objekt put <key> -f <file> -w <wallet> [--storage cdn|arweave|ipfs]
 ```
 
 `key` is the path used to address the file (e.g. `proposals/0xabc/cover`).
@@ -118,17 +131,6 @@ Upload avatars and header images for ENS names:
 
 ```bash
 objekt ens avatar upload nick.eth -f ./avatar.png -w my-wallet --storage arweave
-```
-
----
-
-## Agent-ready
-
-All commands return structured JSON. The CLI is discoverable by AI agents out of the box:
-
-```bash
-objekt --llms       # machine-readable command manifest
-objekt --schema     # JSON Schema for every command
 ```
 
 ---
