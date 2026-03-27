@@ -103,7 +103,7 @@ export function createEnsMediaCommand({
       if (!c.options.ows) {
         return c.error({
           code: "NO_WALLET",
-          message: "Provide --ows <wallet> for signing",
+          message: "Provide --ows <wallet> — uploads are signed with your wallet to prove ownership",
           exitCode: 1,
         });
       }
