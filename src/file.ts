@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 
-import { MIME_MAP, type MediaTypeConfig } from "@objekt/shared";
+import { type MediaTypeConfig, MIME_MAP } from "@objekt/shared";
 
 export async function readMediaFile(
   filePath: string,

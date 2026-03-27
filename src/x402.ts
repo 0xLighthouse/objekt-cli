@@ -15,7 +15,7 @@ if (!(BigInt.prototype as unknown as { toJSON?: () => string }).toJSON) {
 }
 
 const NETWORKS = [
-  "eip155:8453",  // Base
+  "eip155:8453", // Base
   "eip155:84532", // Base Sepolia
 ] as const;
 
@@ -23,7 +23,7 @@ const EXPLORER_URLS: Record<string, string> = {
   "eip155:8453": "https://basescan.org/tx",
   "eip155:84532": "https://sepolia.basescan.org/tx",
   "eip155:1": "https://etherscan.io/tx",
-  "base": "https://basescan.org/tx",
+  base: "https://basescan.org/tx",
   "base-sepolia": "https://sepolia.basescan.org/tx",
 };
 
@@ -47,7 +47,12 @@ function createOwsSigner(wallet: string) {
       };
       const domainTypes = Object.keys(typedData.domain).map((key) => ({
         name: key,
-        type: domainTypeMap[key] ?? (typeof typedData.domain[key] === "bigint" || typeof typedData.domain[key] === "number" ? "uint256" : "string"),
+        type:
+          domainTypeMap[key] ??
+          (typeof typedData.domain[key] === "bigint" ||
+          typeof typedData.domain[key] === "number"
+            ? "uint256"
+            : "string"),
       }));
       const withDomain = {
         ...typedData,
@@ -80,13 +85,15 @@ export function createPaymentFetch(wallet: string) {
 export function extractPaymentReceipt(res: Response) {
   if (!httpClient) return undefined;
   try {
-    const settlement = httpClient.getPaymentSettleResponse(
-      (name: string) => res.headers.get(name),
+    const settlement = httpClient.getPaymentSettleResponse((name: string) =>
+      res.headers.get(name),
     );
     if (!settlement) return undefined;
 
     const result = settlement as Record<string, unknown>;
-    const txHash = (result.transaction ?? result.txHash ?? result.transactionHash) as string | undefined;
+    const txHash = (result.transaction ??
+      result.txHash ??
+      result.transactionHash) as string | undefined;
     const network = result.network as string | undefined;
     if (txHash && network && EXPLORER_URLS[network]) {
       result.explorer = `${EXPLORER_URLS[network]}/${txHash}`;

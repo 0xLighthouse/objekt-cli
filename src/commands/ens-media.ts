@@ -72,7 +72,10 @@ export function createEnsMediaCommand({
     }),
     options: z.object({
       file: z.string().describe("Path to image file"),
-      ows: z.string().optional().describe("OWS wallet name (required unless --estimate)"),
+      ows: z
+        .string()
+        .optional()
+        .describe("OWS wallet name (required unless --estimate)"),
       network: z
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
@@ -81,7 +84,9 @@ export function createEnsMediaCommand({
       storage: z
         .enum(["cached", "arweave", "ipfs"])
         .default("cached")
-        .describe("Storage: cached (free), arweave (permanent, paid), ipfs (12mo, paid)"),
+        .describe(
+          "Storage: cached (free), arweave (permanent, paid), ipfs (12mo, paid)",
+        ),
       estimate: z
         .boolean()
         .optional()
@@ -89,10 +94,7 @@ export function createEnsMediaCommand({
     }),
     alias: { file: "f", ows: "w" },
     async run(c) {
-      const { bytes, dataURL } = await readMediaFile(
-        c.options.file,
-        mediaType,
-      );
+      const { bytes, dataURL } = await readMediaFile(c.options.file, mediaType);
 
       if (c.options.estimate) {
         return estimateUpload({ ...c.options, bytes: bytes.byteLength });
@@ -115,9 +117,7 @@ export function createEnsMediaCommand({
 
       const url = `${getEnsApiUrl(c.options)}/${c.args.name}${pathSuffix}`;
       const storageParam =
-        c.options.storage !== "cached"
-          ? `?storage=${c.options.storage}`
-          : "";
+        c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
       const doFetch =
         c.options.storage !== "cached"
           ? createPaymentFetch(c.options.ows)

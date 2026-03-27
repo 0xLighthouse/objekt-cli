@@ -74,7 +74,10 @@ const put = Cli.create("put", {
       .enum(["cached", "arweave", "ipfs"])
       .default("cached")
       .describe("Storage backend"),
-    estimate: z.boolean().optional().describe("Show cost estimate without uploading"),
+    estimate: z
+      .boolean()
+      .optional()
+      .describe("Show cost estimate without uploading"),
   }),
   alias: { file: "f", ows: "w" },
   output: z.object({
@@ -102,7 +105,11 @@ const put = Cli.create("put", {
     }
 
     if (!c.options.ows) {
-      return c.error({ code: "NO_WALLET", message: "Provide --ows <wallet> for signing", exitCode: 1 });
+      return c.error({
+        code: "NO_WALLET",
+        message: "Provide --ows <wallet> for signing",
+        exitCode: 1,
+      });
     }
 
     const buffer = await readFile(c.options.file);
@@ -131,8 +138,12 @@ const put = Cli.create("put", {
     });
 
     const url = `${getApiUrl(c.options)}/${c.args.key}`;
-    const tierParam = c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
-    const doFetch = c.options.storage !== "cached" ? createPaymentFetch(c.options.ows!) : fetch;
+    const tierParam =
+      c.options.storage !== "cached" ? `?storage=${c.options.storage}` : "";
+    const doFetch =
+      c.options.storage !== "cached"
+        ? createPaymentFetch(c.options.ows!)
+        : fetch;
 
     const res = await doFetch(`${url}${tierParam}`, {
       method: "PUT",

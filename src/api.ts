@@ -12,11 +12,7 @@ export function getEnsApiUrl(options: {
   return buildUrl(base, options.network);
 }
 
-export function getApiUrl(options: {
-  api?: string;
-  network: string;
-}): string {
-  const base =
-    options.api || process.env.OBJEKT_API || "https://api.objekt.sh";
+export function getApiUrl(options: { api?: string; network: string }): string {
+  const base = options.api || process.env.OBJEKT_API || "https://api.objekt.sh";
   return buildUrl(base, options.network);
 }
