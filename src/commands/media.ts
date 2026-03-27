@@ -74,7 +74,7 @@ const put = Cli.create("put", {
     api: z.string().optional().describe("API base URL"),
     storage: z
       .enum(["cdn", "arweave", "ipfs"])
-      .default("cdn")
+      .default("ipfs")
       .describe("Storage backend"),
     estimate: z
       .boolean()

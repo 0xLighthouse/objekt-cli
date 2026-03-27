@@ -85,7 +85,7 @@ export function createEnsMediaCommand({
       ensApi: z.string().optional().describe("ENS API base URL"),
       storage: z
         .enum(["cdn", "arweave", "ipfs"])
-        .default("cdn")
+        .default("ipfs")
         .describe(
           "Storage: cached (free), arweave (permanent, paid), ipfs (12mo, paid)",
         ),
