@@ -23,6 +23,8 @@ const EXPLORER_URLS: Record<string, string> = {
   "eip155:8453": "https://basescan.org/tx",
   "eip155:84532": "https://sepolia.basescan.org/tx",
   "eip155:1": "https://etherscan.io/tx",
+  "base": "https://basescan.org/tx",
+  "base-sepolia": "https://sepolia.basescan.org/tx",
 };
 
 function createOwsSigner(wallet: string) {
@@ -84,7 +86,7 @@ export function extractPaymentReceipt(res: Response) {
     if (!settlement) return undefined;
 
     const result = settlement as Record<string, unknown>;
-    const txHash = (result.txHash ?? result.transactionHash) as string | undefined;
+    const txHash = (result.transaction ?? result.txHash ?? result.transactionHash) as string | undefined;
     const network = result.network as string | undefined;
     if (txHash && network && EXPLORER_URLS[network]) {
       result.explorer = `${EXPLORER_URLS[network]}/${txHash}`;
