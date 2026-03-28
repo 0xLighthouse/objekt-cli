@@ -71,6 +71,8 @@ contenthash.command("set", {
     name: z.string(),
     uri: z.string(),
     txHash: z.string(),
+    etherscan: z.string(),
+    website: z.string(),
   }),
   async run(c) {
     const chain = CHAINS[c.options.network];
@@ -105,10 +107,18 @@ contenthash.command("set", {
       resolverAddress: resolver,
     });
 
+    const etherscan =
+      c.options.network === "mainnet"
+        ? `https://etherscan.io/tx/${txHash}`
+        : `https://sepolia.etherscan.io/tx/${txHash}`;
+    const website = `https://${c.args.name}.limo`;
+
     return {
       name: c.args.name,
       uri: c.args.uri,
       txHash,
+      etherscan,
+      website,
     };
   },
 });

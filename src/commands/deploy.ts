@@ -4,6 +4,7 @@ import { sha256 } from "viem";
 
 import { getApiUrl } from "../api";
 import { getWalletAddress, signUpload } from "../sign";
+import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
 const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -142,25 +143,57 @@ const deploy = Cli.create("deploy", {
 
     const storageParam = c.options.storage === "ipfs" ? "?storage=ipfs" : "";
     const url = `${getApiUrl(c.options)}/deploy${storageParam}`;
+    const doFetch =
+      c.options.storage === "ipfs"
+        ? createPaymentFetch(c.options.ows, c.options.testnet)
+        : fetch;
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        hash,
-        files: fileEntries,
-        expiry,
-        sig,
-        unverifiedAddress,
-      }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      return c.error({ code: "DEPLOY_FAILED", message: text, exitCode: 1 });
+    let res: Response;
+    try {
+      res = await doFetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hash,
+          files: fileEntries,
+          expiry,
+          sig,
+          unverifiedAddress,
+        }),
+      });
+    } catch (e) {
+      return c.error({
+        code: "DEPLOY_FAILED",
+        message: e instanceof Error ? e.message : String(e),
+        exitCode: 1,
+      });
     }
 
-    return await res.json();
+    if (!res.ok) {
+      let message = await res.text();
+      if (res.status === 402) {
+        const encoded = res.headers.get("payment-required");
+        if (encoded) {
+          try {
+            const decoded = JSON.parse(atob(encoded));
+            message = decoded.error ?? message;
+          } catch {}
+        }
+      }
+      return c.error({ code: "DEPLOY_FAILED", message, exitCode: 1 });
+    }
+
+    const data = await res.json();
+    const payment = extractPaymentReceipt(res);
+    const result = payment ? { ...data, payment } : data;
+
+    if (data.uri) {
+      console.error(
+        `\nTo point an ENS name to this site:\n  objekt ens contenthash set <name.eth> "${data.uri}" -w ${c.options.ows}\n\nThen visit: https://<name.eth>.limo`,
+      );
+    }
+
+    return result;
   },
 });
 
