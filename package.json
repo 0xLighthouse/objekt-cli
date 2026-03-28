@@ -20,6 +20,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ensdomains/ensjs": "4.0.2",
     "@open-wallet-standard/core": "^1.1.0",
     "@x402/evm": "^2.8.0",
     "@x402/fetch": "^2.8.0",
@@ -27,8 +28,8 @@
     "viem": "^2.23.10"
   },
   "devDependencies": {
-    "@objekt/shared": "workspace:*",
     "@biomejs/biome": "^2.3.5",
+    "@objekt/shared": "workspace:*",
     "tsup": "^8",
     "tsx": "^4",
     "typescript": "^5.8.2"

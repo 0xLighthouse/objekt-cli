@@ -1,6 +1,7 @@
 import { Cli } from "incur";
 
 import avatar from "./avatar";
+import contenthash from "./contenthash";
 import header from "./header";
 
 const ens = Cli.create("ens", {
@@ -10,5 +11,6 @@ const ens = Cli.create("ens", {
 
 ens.command(avatar);
 ens.command(header);
+ens.command(contenthash);
 
 export default ens;

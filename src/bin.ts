@@ -1,6 +1,7 @@
 import { Cli } from "incur";
 
 import pkg from "../package.json";
+import deploy from "./commands/deploy";
 import ens from "./commands/ens";
 import { get, put } from "./commands/media";
 import pricing from "./commands/pricing";
@@ -26,6 +27,7 @@ cli.command(wallet);
 cli.command(ens);
 cli.command(get);
 cli.command(put);
+cli.command(deploy);
 cli.command(pricing);
 
 cli.serve();

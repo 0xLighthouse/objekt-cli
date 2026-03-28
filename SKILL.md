@@ -1,6 +1,6 @@
 ---
 name: objekt
-description: Upload files to IPFS and Arweave, manage ENS media. Pay with USDC via x402. No accounts or API keys — just a local wallet.
+description: Upload files to IPFS and Arweave, deploy static sites, manage ENS media and contenthash. Pay with USDC via x402. No accounts or API keys — just a local wallet.
 ---
 
 # objekt
@@ -37,7 +37,29 @@ objekt put <file> -w <wallet> --storage arweave --estimate
 
 `--key` overrides the storage key (defaults to the filename).
 
-Returns JSON: `{ name, kind, bytes, uri?, permalink, payment? }` — payment includes tx hash and explorer URL.
+Returns JSON: `{ name, kind, bytes, uri?, permalink, contenthash?, payment? }` — payment includes tx hash and explorer URL.
+
+## Deploy a static site
+
+```bash
+# Temporary preview (7 days, free)
+objekt deploy <directory> -w <wallet>
+
+# Pin to IPFS (permanent, paid)
+objekt deploy <directory> -w <wallet> --storage ipfs
+```
+
+Returns JSON: `{ url, hash, files, size, expiresIn, uri?, contenthash? }`
+
+## ENS contenthash
+
+```bash
+# Read contenthash
+objekt ens contenthash get <ens-name>
+
+# Set contenthash (needs ETH for gas)
+objekt ens contenthash set <ens-name> "ipfs://QmCID" -w <wallet>
+```
 
 ## Retrieve a file
 

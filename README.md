@@ -107,6 +107,7 @@ Every upload returns a consistent shape:
   "bytes": 142087,
   "uri": "ar://BzIbGE9Nl6WqlyFo6wkCWAu9f0PnmuD3Sqk_2EWatu0",
   "permalink": "https://ar.objekt.sh/BzIbGE9Nl6WqlyFo6wkCWAu9f0PnmuD3Sqk_2EWatu0",
+  "contenthash": "0xe301...",
   "payment": {
     "txHash": "0xfc88c3...",
     "explorerUrl": "https://basescan.org/tx/0xfc88c3..."
@@ -118,6 +119,7 @@ Every upload returns a consistent shape:
 |-------|-------------|
 | `uri` | Protocol URI (`ar://`, `ipfs://`) — omitted for CDN |
 | `permalink` | Gateway URL to access the content |
+| `contenthash` | ENSIP-7 hex-encoded contenthash — set this on your ENS name |
 | `payment` | On-chain USDC receipt — omitted for free CDN tier |
 
 Permalinks resolve to your content via objekt.sh gateways:
@@ -136,12 +138,53 @@ objekt get <key> --output ./file.pdf
 
 ---
 
-## ENS media
+## Deploy static sites
+
+Deploy a directory as a temporary preview site or pin to IPFS for permanent hosting.
+
+```bash
+# Temporary preview (7 days, free)
+objekt deploy ./dist -w my-wallet
+
+# Pin to IPFS (permanent, paid)
+objekt deploy ./dist -w my-wallet --storage ipfs
+```
+
+Temporary deploys get a cute URL like `https://tmp.objekt.sh/calm-fox-k7m/`. IPFS deploys also return a `contenthash` you can set on your ENS name.
+
+---
+
+## ENS
 
 Upload avatars and header images for ENS names:
 
 ```bash
 objekt ens avatar upload 1a35e1.eth -f ./avatar.png -w my-wallet --storage arweave
+```
+
+### Contenthash
+
+Read or set the ENSIP-7 contenthash on any ENS name. Use this to point your ENS name to a website on IPFS.
+
+```bash
+# Read
+objekt ens contenthash get vitalik.eth
+
+# Set (requires ENS name ownership + ETH for gas)
+objekt ens contenthash set myname.eth "ipfs://QmRootCID" -w my-wallet
+```
+
+### Full website deploy flow
+
+```bash
+# 1. Deploy site to IPFS
+objekt deploy ./dist -w my-wallet --storage ipfs
+# Returns: uri: ipfs://QmRootCID, contenthash: 0xe301...
+
+# 2. Set contenthash on your ENS name
+objekt ens contenthash set myname.eth "ipfs://QmRootCID" -w my-wallet
+
+# 3. Visit myname.eth.limo
 ```
 
 ---
