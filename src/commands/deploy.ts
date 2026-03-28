@@ -23,7 +23,9 @@ function getMime(filePath: string): string {
 const deploy = Cli.create("deploy", {
   description: "Deploy a static site to a temporary preview URL",
   args: z.object({
-    directory: z.string().describe("Path to static site directory (e.g. ./dist)"),
+    directory: z
+      .string()
+      .describe("Path to static site directory (e.g. ./dist)"),
   }),
   options: z.object({
     ows: z.string().describe("OWS wallet name"),
@@ -36,7 +38,9 @@ const deploy = Cli.create("deploy", {
     storage: z
       .enum(["tmp", "ipfs"])
       .default("tmp")
-      .describe("Storage: tmp (7d preview) or ipfs (permanent, sets contenthash)"),
+      .describe(
+        "Storage: tmp (7d preview) or ipfs (permanent, sets contenthash)",
+      ),
   }),
   alias: { ows: "w" },
   output: z.object({
@@ -50,7 +54,7 @@ const deploy = Cli.create("deploy", {
   }),
   async run(c) {
     const { readdir, readFile, stat } = await import("node:fs/promises");
-    const { join, relative, extname } = await import("node:path");
+    const { join } = await import("node:path");
 
     const dir = c.args.directory.replace(/\/$/, "");
 

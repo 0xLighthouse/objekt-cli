@@ -184,7 +184,11 @@ const put = Cli.create("put", {
         body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),
       });
     } catch (e) {
-      return c.error({ code: "UPLOAD_FAILED", message: e instanceof Error ? e.message : String(e), exitCode: 1 });
+      return c.error({
+        code: "UPLOAD_FAILED",
+        message: e instanceof Error ? e.message : String(e),
+        exitCode: 1,
+      });
     }
 
     if (!res.ok) {

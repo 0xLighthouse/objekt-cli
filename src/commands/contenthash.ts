@@ -1,4 +1,8 @@
-import { addEnsContracts, ensPublicActions, ensWalletActions } from "@ensdomains/ensjs";
+import {
+  addEnsContracts,
+  ensPublicActions,
+  ensWalletActions,
+} from "@ensdomains/ensjs";
 import { Cli, z } from "incur";
 import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";

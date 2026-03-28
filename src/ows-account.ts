@@ -5,9 +5,9 @@ import {
 } from "@open-wallet-standard/core";
 import {
   type Hex,
+  hexToNumber,
   type LocalAccount,
   type Signature,
-  hexToNumber,
   serializeTransaction,
 } from "viem";
 import { toAccount } from "viem/accounts";
@@ -29,9 +29,9 @@ export function createOwsAccount(wallet: string): LocalAccount {
         typeof message === "string"
           ? message
           : typeof message === "object" && "raw" in message
-            ? (typeof message.raw === "string"
-                ? message.raw
-                : Buffer.from(message.raw).toString("hex"))
+            ? typeof message.raw === "string"
+              ? message.raw
+              : Buffer.from(message.raw).toString("hex")
             : String(message);
       const result = owsSignMessage(wallet, "evm", msg);
       return (
