@@ -176,15 +176,29 @@ const put = Cli.create("put", {
         ? createPaymentFetch(ows, c.options.testnet)
         : fetch;
 
-    const res = await doFetch(`${url}${tierParam}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),
-    });
+    let res: Response;
+    try {
+      res = await doFetch(`${url}${tierParam}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),
+      });
+    } catch (e) {
+      return c.error({ code: "UPLOAD_FAILED", message: e instanceof Error ? e.message : String(e), exitCode: 1 });
+    }
 
     if (!res.ok) {
-      const text = await res.text();
-      return c.error({ code: "UPLOAD_FAILED", message: text, exitCode: 1 });
+      let message = await res.text();
+      if (res.status === 402) {
+        const encoded = res.headers.get("payment-required");
+        if (encoded) {
+          try {
+            const decoded = JSON.parse(atob(encoded));
+            message = decoded.error ?? message;
+          } catch {}
+        }
+      }
+      return c.error({ code: "UPLOAD_FAILED", message, exitCode: 1 });
     }
 
     const data = await res.json();

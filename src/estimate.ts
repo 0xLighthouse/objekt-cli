@@ -1,4 +1,4 @@
-import { getEnsApiUrl } from "./api";
+import { getApiUrl } from "./api";
 
 interface PricingTier {
   ratePerMb?: number;
@@ -23,10 +23,7 @@ export async function estimateUpload(options: {
   storage: string;
   cost: string;
 }> {
-  const baseUrl =
-    options.ensApi || options.api
-      ? getEnsApiUrl(options as { ensApi?: string; network: string })
-      : getEnsApiUrl(options as { ensApi?: string; network: string });
+  const baseUrl = getApiUrl(options);
 
   const res = await fetch(`${baseUrl}/pricing`);
   if (!res.ok) throw new Error("Failed to fetch pricing");
