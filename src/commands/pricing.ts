@@ -1,11 +1,11 @@
 import { Cli, z } from "incur";
 
-import { getEnsApiUrl } from "../api";
+import { getApiUrl } from "../api";
 
 const pricing = Cli.create("pricing", {
   description: "Show storage tiers, pricing, and limits",
   options: z.object({
-    ensApi: z.string().optional().describe("ENS API base URL"),
+    api: z.string().optional().describe("API base URL"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
@@ -18,7 +18,7 @@ const pricing = Cli.create("pricing", {
     rateLimits: z.record(z.string(), z.any()),
   }),
   async run(c) {
-    const url = `${getEnsApiUrl(c.options)}/pricing`;
+    const url = `${getApiUrl(c.options)}/pricing`;
     const res = await fetch(url);
 
     if (!res.ok) {

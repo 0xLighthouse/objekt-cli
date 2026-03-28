@@ -1,3 +1,6 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
+
 import { MIME_MAP } from "@objekt/shared";
 import { Cli, z } from "incur";
 import { sha256 } from "viem";
@@ -5,6 +8,28 @@ import { sha256 } from "viem";
 import { getApiUrl } from "../api";
 import { getWalletAddress, signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
+
+const HISTORY_PATH = join(homedir(), ".objekt", "deploys.json");
+
+async function saveDeployHistory(entry: Record<string, unknown>) {
+  const { mkdir, readFile, writeFile } = await import("node:fs/promises");
+  await mkdir(join(homedir(), ".objekt"), { recursive: true });
+  let history: Record<string, unknown>[] = [];
+  try {
+    history = JSON.parse(await readFile(HISTORY_PATH, "utf-8"));
+  } catch {}
+  history.push(entry);
+  await writeFile(HISTORY_PATH, JSON.stringify(history, null, 2));
+}
+
+async function loadDeployHistory(): Promise<Record<string, unknown>[]> {
+  const { readFile } = await import("node:fs/promises");
+  try {
+    return JSON.parse(await readFile(HISTORY_PATH, "utf-8"));
+  } catch {
+    return [];
+  }
+}
 
 const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -29,7 +54,7 @@ const deploy = Cli.create("deploy", {
       .describe("Path to static site directory (e.g. ./dist)"),
   }),
   options: z.object({
-    ows: z.string().describe("OWS wallet name"),
+    ows: z.string().optional().describe("OWS wallet name"),
     api: z.string().optional().describe("API base URL"),
     network: z
       .enum(["mainnet", "sepolia"])
@@ -54,6 +79,26 @@ const deploy = Cli.create("deploy", {
     contenthash: z.string().optional(),
   }),
   async run(c) {
+    if (c.args.directory === "list") {
+      const history = await loadDeployHistory();
+      return history.map((h: Record<string, unknown>) => ({
+        hash: h.hash,
+        url: h.url,
+        directory: h.directory,
+        deployedAt: h.deployedAt,
+        uri: h.uri,
+      }));
+    }
+
+    if (!c.options.ows) {
+      return c.error({
+        code: "NO_WALLET",
+        message: "Provide --ows <wallet> to sign deploys",
+        exitCode: 1,
+      });
+    }
+    const { ows } = c.options;
+
     const { readdir, readFile, stat } = await import("node:fs/promises");
     const { join } = await import("node:path");
 
@@ -127,9 +172,9 @@ const deploy = Cli.create("deploy", {
     const hash = sha256(new Uint8Array(combined));
 
     // Sign with wallet
-    const address = getWalletAddress(c.options.ows);
+    const address = getWalletAddress(ows);
     const { sig, expiry, unverifiedAddress } = signUpload({
-      wallet: c.options.ows,
+      wallet: ows,
       name: address,
       uploadType: "deploy",
       bytes: new Uint8Array(combined),
@@ -145,7 +190,7 @@ const deploy = Cli.create("deploy", {
     const url = `${getApiUrl(c.options)}/deploy${storageParam}`;
     const doFetch =
       c.options.storage === "ipfs"
-        ? createPaymentFetch(c.options.ows, c.options.testnet)
+        ? createPaymentFetch(ows, c.options.testnet)
         : fetch;
 
     let res: Response;
@@ -187,9 +232,16 @@ const deploy = Cli.create("deploy", {
     const payment = extractPaymentReceipt(res);
     const result = payment ? { ...data, payment } : data;
 
+    // Save to local deploy history
+    await saveDeployHistory({
+      ...result,
+      directory: dir,
+      deployedAt: new Date().toISOString(),
+    });
+
     if (data.uri) {
       console.error(
-        `\nTo point an ENS name to this site:\n  objekt ens contenthash set <name.eth> "${data.uri}" -w ${c.options.ows}\n\nThen visit: https://<name.eth>.limo`,
+        `\nTo point an ENS name to this site:\n  objekt ens contenthash set <name.eth> "${data.uri}" -w ${ows}\n\nThen visit: https://<name.eth>.limo`,
       );
     }
 

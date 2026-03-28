@@ -16,6 +16,7 @@
   "scripts": {
     "dev": "tsx src/bin.ts",
     "build": "tsup src/bin.ts --format esm",
+    "release:dev": "tsup src/bin.ts --format esm && pnpm link --global",
     "lint": "biome check",
     "type-check": "tsc --noEmit"
   },
