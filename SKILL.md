@@ -22,7 +22,7 @@ objekt wallet import <name> --private-key 0x...
 ## Upload a file
 
 ```bash
-# IPFS pinning (default, $0.10/MB, 12-month guarantee)
+# IPFS pinning (default, $0.20/MB, 12-month guarantee)
 objekt put <file> -w <wallet>
 
 # Permanent Arweave storage (~$0.09/MB, one-time payment)
@@ -45,7 +45,7 @@ Returns JSON: `{ name, kind, bytes, uri?, permalink, contenthash?, payment? }` â
 # Temporary preview (7 days, free)
 objekt deploy <directory> -w <wallet>
 
-# Pin to IPFS (permanent, $0.10/MB USDC via x402)
+# Pin to IPFS (permanent, $0.20/MB USDC via x402)
 objekt deploy <directory> -w <wallet> --storage ipfs
 ```
 
