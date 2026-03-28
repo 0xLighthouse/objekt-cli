@@ -45,11 +45,13 @@ Returns JSON: `{ name, kind, bytes, uri?, permalink, contenthash?, payment? }` â
 # Temporary preview (7 days, free)
 objekt deploy <directory> -w <wallet>
 
-# Pin to IPFS (permanent, paid)
+# Pin to IPFS (permanent, $0.10/MB USDC via x402)
 objekt deploy <directory> -w <wallet> --storage ipfs
 ```
 
-Returns JSON: `{ url, hash, files, size, expiresIn, uri?, contenthash? }`
+Returns JSON: `{ url, hash, files, size, expiresIn, uri?, contenthash?, payment? }`
+
+IPFS deploys are paid via x402 (USDC on Base). After a successful IPFS deploy, the CLI prints the command to set the ENS contenthash.
 
 ## ENS contenthash
 

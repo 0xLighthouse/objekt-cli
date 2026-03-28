@@ -146,11 +146,16 @@ Deploy a directory as a temporary preview site or pin to IPFS for permanent host
 # Temporary preview (7 days, free)
 objekt deploy ./dist -w my-wallet
 
-# Pin to IPFS (permanent, paid)
+# Pin to IPFS (permanent, $0.10/MB USDC)
 objekt deploy ./dist -w my-wallet --storage ipfs
 ```
 
-Temporary deploys get a cute URL like `https://tmp.objekt.sh/calm-fox-k7m/`. IPFS deploys also return a `contenthash` you can set on your ENS name.
+| Storage | Cost | Durability |
+|---------|------|-----------|
+| `tmp` (default) | Free | 7-day preview on Cloudflare edge |
+| `ipfs` | $0.10/MB USDC | Permanent IPFS pin via x402 payment |
+
+Temporary deploys get a cute URL like `https://tmp.objekt.sh/calm-fox-k7m/`. IPFS deploys also return a `contenthash` you can set on your ENS name — the CLI will show you the exact command.
 
 ---
 
