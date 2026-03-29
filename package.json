@@ -18,6 +18,7 @@
     "build": "tsup src/bin.ts --format esm",
     "release:dev": "tsup src/bin.ts --format esm && pnpm link --global",
     "lint": "biome check",
+    "test": "vitest run",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,9 +31,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.5",
+    "@objekt.sh/ecies": "workspace:*",
     "@objekt/shared": "workspace:*",
     "tsup": "^8",
     "tsx": "^4",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "3.0.8"
   }
 }

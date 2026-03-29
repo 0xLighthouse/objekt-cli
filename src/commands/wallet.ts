@@ -4,6 +4,8 @@ import {
   listWallets,
 } from "@open-wallet-standard/core";
 import { Cli, z } from "incur";
+import { ALL_NAMESPACES } from "@objekt.sh/ecies";
+import { deriveEncryptionKeypair } from "../crypto";
 
 const wallet = Cli.create("wallet", {
   description:
@@ -96,6 +98,70 @@ wallet.command("list", {
         };
       }),
     };
+  },
+});
+
+wallet.command("encryption-key", {
+  description:
+    "Derive and display your encryption public keys per chain. Share these with others so they can encrypt content for you.",
+  args: z.object({
+    name: z.string().describe("Wallet name"),
+  }),
+  options: z.object({
+    chain: z
+      .string()
+      .optional()
+      .describe("CAIP-2 namespace or name (eip155, bip122, solana, ethereum, bitcoin, ...). Shows all if omitted."),
+  }),
+  output: z.object({
+    keys: z.array(
+      z.object({
+        namespace: z.string().describe("CAIP-2 namespace"),
+        curve: z.string(),
+        publicKey: z.string(),
+      }),
+    ),
+  }),
+  examples: [
+    {
+      args: { name: "my-wallet" },
+      description: "Show all encryption keys",
+    },
+    {
+      args: { name: "my-wallet" },
+      options: { chain: "bip122" },
+      description: "Show Bitcoin encryption key only",
+    },
+  ],
+  run(c) {
+    const chains = c.options.chain
+      ? [c.options.chain]
+      : [...ALL_NAMESPACES];
+
+    const keys: { namespace: string; curve: string; publicKey: string }[] = [];
+
+    for (const chain of chains) {
+      try {
+        const kp = deriveEncryptionKeypair(c.args.name, chain);
+        keys.push({
+          namespace: kp.namespace,
+          curve: kp.curve === 0x01 ? "secp256k1" : "x25519",
+          publicKey: `0x${Buffer.from(kp.publicKey).toString("hex")}`,
+        });
+      } catch {
+        // Wallet may not have an account on this chain
+      }
+    }
+
+    if (keys.length === 0) {
+      return c.error({
+        code: "NO_KEYS",
+        message: "Could not derive encryption keys — wallet has no supported chain accounts",
+        exitCode: 1,
+      });
+    }
+
+    return { keys };
   },
 });
 

@@ -1,7 +1,15 @@
 import { MIME_MAP } from "@objekt/shared";
+import { isEncrypted, Namespace, ENCRYPTED_MIME, generateViewKey, parseViewKey } from "@objekt.sh/ecies";
 import { Cli, z } from "incur";
 
 import { getApiUrl } from "../api";
+import {
+  deriveEncryptionKeypair,
+  deriveAllEncryptionKeypairs,
+  encryptForRecipients,
+  decryptEnvelope,
+  resolveRecipient,
+} from "../crypto";
 import { estimateUpload } from "../estimate";
 import { getWalletAddress, signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
@@ -12,6 +20,8 @@ const get = Cli.create("get", {
     key: z.string().describe("Media key (e.g. proposals/0x.../media/abc)"),
   }),
   options: z.object({
+    ows: z.string().optional().describe("OWS wallet name (required to decrypt encrypted content)"),
+    viewKey: z.string().optional().describe("View key to decrypt (objekt_vk_...)"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
@@ -20,10 +30,12 @@ const get = Cli.create("get", {
     api: z.string().optional().describe("API base URL"),
     output: z.string().optional().describe("Save to file path"),
   }),
+  alias: { ows: "w" },
   output: z.object({
     key: z.string(),
     contentType: z.string(),
     size: z.number().describe("Size in bytes"),
+    encrypted: z.boolean().optional().describe("Content was encrypted"),
     saved: z.string().optional().describe("File path if saved"),
   }),
   examples: [
@@ -41,8 +53,27 @@ const get = Cli.create("get", {
       return c.error({ code: "NOT_FOUND", message: text, exitCode: 1 });
     }
 
-    const contentType = res.headers.get("content-type") || "unknown";
-    const buffer = Buffer.from(await res.arrayBuffer());
+    let contentType = res.headers.get("content-type") || "unknown";
+    let buffer = Buffer.from(await res.arrayBuffer());
+    let wasEncrypted = false;
+
+    const bytes = new Uint8Array(buffer);
+    if (isEncrypted(bytes)) {
+      if (!c.options.ows && !c.options.viewKey) {
+        return c.error({
+          code: "ENCRYPTED",
+          message: "Content is encrypted. Provide --ows <wallet> or --view-key to decrypt.",
+          exitCode: 1,
+        });
+      }
+      const keypairs = c.options.viewKey
+        ? [parseViewKey(c.options.viewKey)]
+        : deriveAllEncryptionKeypairs(c.options.ows!);
+      const { plaintext, mime } = decryptEnvelope(bytes, keypairs);
+      buffer = Buffer.from(plaintext);
+      if (mime) contentType = mime;
+      wasEncrypted = true;
+    }
 
     if (c.options.output) {
       const { writeFile } = await import("node:fs/promises");
@@ -53,6 +84,7 @@ const get = Cli.create("get", {
       key: c.args.key,
       contentType,
       size: buffer.byteLength,
+      encrypted: wasEncrypted || undefined,
       saved: c.options.output,
     };
   },
@@ -76,6 +108,18 @@ const put = Cli.create("put", {
       .enum(["cdn", "arweave", "ipfs"])
       .default("ipfs")
       .describe("Storage backend"),
+    encrypt: z
+      .boolean()
+      .default(false)
+      .describe("Encrypt content (E2E, client-side)"),
+    encryptFor: z
+      .array(z.string())
+      .optional()
+      .describe("Recipient public keys or ENS names to encrypt for"),
+    viewKey: z
+      .boolean()
+      .default(false)
+      .describe("Generate a shareable view key for decryption without a wallet"),
     estimate: z
       .boolean()
       .optional()
@@ -88,6 +132,7 @@ const put = Cli.create("put", {
     bytes: z.number(),
     uri: z.string().optional(),
     permalink: z.string(),
+    viewKey: z.string().optional().describe("Shareable view key for decryption"),
     payment: z
       .object({
         txHash: z.string(),
@@ -144,7 +189,7 @@ const put = Cli.create("put", {
 
     const { ows } = c.options;
     const buffer = await readFile(c.args.file);
-    const bytes = new Uint8Array(buffer);
+    let bytes: Uint8Array = new Uint8Array(buffer);
     const ext = extname(c.args.file).toLowerCase();
 
     const mime = MIME_MAP[ext];
@@ -156,7 +201,33 @@ const put = Cli.create("put", {
       });
     }
 
-    const dataURL = `data:${mime};base64,${buffer.toString("base64")}`;
+    let dataURL = `data:${mime};base64,${buffer.toString("base64")}`;
+
+    // Encrypt if requested
+    let viewKeyStr: string | undefined;
+    if (c.options.encrypt || c.options.encryptFor?.length || c.options.viewKey) {
+      const recipients = [];
+
+      const selfKey = deriveEncryptionKeypair(ows, Namespace.EIP155);
+      recipients.push({ pubKey: selfKey.publicKey, curve: selfKey.curve });
+
+      if (c.options.encryptFor) {
+        for (const r of c.options.encryptFor) {
+          const resolved = await resolveRecipient(r, c.options.network);
+          recipients.push(resolved);
+        }
+      }
+
+      if (c.options.viewKey) {
+        const vk = generateViewKey();
+        recipients.push(vk.recipient);
+        viewKeyStr = vk.viewKey;
+      }
+
+      const encrypted = encryptForRecipients(bytes, recipients, mime);
+      bytes = encrypted;
+      dataURL = `data:${ENCRYPTED_MIME};base64,${Buffer.from(encrypted).toString("base64")}`;
+    }
 
     const { getAddress } = await import("viem");
     const address = getAddress(getWalletAddress(c.options.ows));
@@ -207,7 +278,7 @@ const put = Cli.create("put", {
 
     const data = await res.json();
     const payment = extractPaymentReceipt(res);
-    return payment ? { ...data, payment } : data;
+    return { ...data, ...(viewKeyStr && { viewKey: viewKeyStr }), ...(payment && { payment }) };
   },
 });
 
