@@ -1,4 +1,8 @@
-import { typedDataParameters } from "@objekt/shared";
+import {
+  typedDataParameters,
+  revealDepositTypedDataParameters,
+  revealRemoveTypedDataParameters,
+} from "@objekt/shared";
 import {
   getWallet,
   signTypedData as owsSignTypedData,
@@ -54,4 +58,80 @@ export function signUpload({
     : (`0x${result.signature}` as Hex);
 
   return { sig, expiry, unverifiedAddress: address, hash };
+}
+
+export function signRevealDeposit({
+  wallet,
+  ensName,
+  keyName,
+  commitment,
+  price,
+}: {
+  wallet: string;
+  ensName: string;
+  keyName: string;
+  commitment: string;
+  price: string;
+}): {
+  sig: Hex;
+  expiry: string;
+  unverifiedAddress: Address;
+} {
+  const expiry = String(Date.now() + 60_000);
+  const address = getWalletAddress(wallet);
+
+  const typedData = {
+    ...revealDepositTypedDataParameters,
+    types: {
+      EIP712Domain: [
+        { name: "name", type: "string" },
+        { name: "version", type: "string" },
+      ],
+      ...revealDepositTypedDataParameters.types,
+    },
+    message: { action: "deposit", ensName, keyName, commitment, price, expiry },
+  };
+
+  const result = owsSignTypedData(wallet, "evm", JSON.stringify(typedData));
+  const sig = result.signature.startsWith("0x")
+    ? (result.signature as Hex)
+    : (`0x${result.signature}` as Hex);
+
+  return { sig, expiry, unverifiedAddress: address };
+}
+
+export function signRevealRemove({
+  wallet,
+  ensName,
+  keyName,
+}: {
+  wallet: string;
+  ensName: string;
+  keyName: string;
+}): {
+  sig: Hex;
+  expiry: string;
+  unverifiedAddress: Address;
+} {
+  const expiry = String(Date.now() + 60_000);
+  const address = getWalletAddress(wallet);
+
+  const typedData = {
+    ...revealRemoveTypedDataParameters,
+    types: {
+      EIP712Domain: [
+        { name: "name", type: "string" },
+        { name: "version", type: "string" },
+      ],
+      ...revealRemoveTypedDataParameters.types,
+    },
+    message: { action: "remove", ensName, keyName, expiry },
+  };
+
+  const result = owsSignTypedData(wallet, "evm", JSON.stringify(typedData));
+  const sig = result.signature.startsWith("0x")
+    ? (result.signature as Hex)
+    : (`0x${result.signature}` as Hex);
+
+  return { sig, expiry, unverifiedAddress: address };
 }

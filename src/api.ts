@@ -30,3 +30,15 @@ export function getApiUrl(options: {
   const base = options.api || process.env.OBJEKT_API || defaultBase;
   return buildUrl(base, options.network);
 }
+
+export function getRevealApiUrl(options: {
+  revealApi?: string;
+  network: string;
+  testnet?: boolean;
+}): string {
+  const defaultBase = isTestnet(options)
+    ? "https://stage.reveal.objekt.sh"
+    : "https://reveal.objekt.sh";
+  const base = options.revealApi || process.env.OBJEKT_REVEAL_API || defaultBase;
+  return buildUrl(base, options.network);
+}

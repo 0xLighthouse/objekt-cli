@@ -5,6 +5,7 @@ import deploy from "./commands/deploy";
 import ens from "./commands/ens";
 import { get, put } from "./commands/media";
 import pricing from "./commands/pricing";
+import reveal from "./commands/reveal";
 import wallet from "./commands/wallet";
 
 const cli = Cli.create("objekt", {
@@ -29,6 +30,7 @@ cli.command(get);
 cli.command(put);
 cli.command(deploy);
 cli.command(pricing);
+cli.command(reveal);
 
 cli.serve();
 
