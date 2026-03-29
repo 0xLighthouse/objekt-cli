@@ -8,7 +8,7 @@ import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 const deposit = Cli.create("deposit", {
   description: "Deposit a view key for pay-to-reveal",
   args: z.object({
-    name: z.string().describe("ENS name (nick.eth) or wallet address (0x...)"),
+    name: z.string().describe("ENS name (1a35e1.eth) or wallet address (0x...)"),
     keyName: z.string().describe("Key name (e.g. phone, email, telegram)"),
   }),
   options: z.object({
