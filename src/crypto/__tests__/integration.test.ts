@@ -110,7 +110,7 @@ describe("cross-chain integration: alice (eip155) → bob (solana), bob (eip155)
 				{ pubKey: bobEthKp.publicKey, curve: bobEthKp.curve },
 				{ pubKey: charlieBtcKp.publicKey, curve: charlieBtcKp.curve },
 			],
-			MIME,
+			{ mime: MIME },
 		);
 	});
 

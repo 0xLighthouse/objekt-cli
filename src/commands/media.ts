@@ -224,7 +224,7 @@ const put = Cli.create("put", {
         viewKeyStr = vk.viewKey;
       }
 
-      const encrypted = encryptForRecipients(bytes, recipients, mime);
+      const encrypted = encryptForRecipients(bytes, recipients, { mime });
       bytes = encrypted;
       dataURL = `data:${ENCRYPTED_MIME};base64,${Buffer.from(encrypted).toString("base64")}`;
     }
