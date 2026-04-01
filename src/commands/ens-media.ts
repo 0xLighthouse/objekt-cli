@@ -1,8 +1,16 @@
 import type { MediaTypeConfig } from "@objekt/shared";
+import {
+  addEnsContracts,
+  ensPublicActions,
+  ensWalletActions,
+} from "@ensdomains/ensjs";
 import { isEncrypted, Namespace, ENCRYPTED_MIME, generateViewKey, parseViewKey } from "@objekt.sh/ecies";
 import { Cli, z } from "incur";
+import { createClient, createWalletClient, http } from "viem";
+import { mainnet, sepolia } from "viem/chains";
 
 import { getEnsApiUrl } from "../api";
+import { createOwsAccount } from "../ows-account";
 import {
   deriveEncryptionKeypair,
   deriveAllEncryptionKeypairs,
@@ -216,6 +224,78 @@ export function createEnsMediaCommand({
       const data = await res.json();
       const payment = extractPaymentReceipt(res);
       return { ...data, ...(viewKeyStr && { viewKey: viewKeyStr }), ...(payment && { payment }) };
+    },
+  });
+
+  const CHAINS = {
+    mainnet: addEnsContracts(mainnet),
+    sepolia: addEnsContracts(sepolia),
+  } as const;
+
+  cli.command("set", {
+    description: `Set the ENS ${name} text record on-chain`,
+    args: z.object({
+      name: z.string().describe("ENS name (e.g. 1a35e1.eth)"),
+      uri: z.string().describe("URI to set (e.g. https://ens.objekt.sh/1a35e1.eth/avatar)"),
+    }),
+    options: z.object({
+      ows: z.string().describe("OWS wallet name"),
+      network: z
+        .enum(["mainnet", "sepolia"])
+        .default("mainnet")
+        .describe("Network"),
+    }),
+    alias: { ows: "w" },
+    output: z.object({
+      name: z.string(),
+      key: z.string(),
+      value: z.string(),
+      txHash: z.string(),
+      etherscan: z.string(),
+    }),
+    async run(c) {
+      const chain = CHAINS[c.options.network];
+      const account = createOwsAccount(c.options.ows);
+
+      const publicClient = createClient({
+        chain,
+        transport: http(),
+      }).extend(ensPublicActions);
+
+      const resolver = await publicClient.getResolver({ name: c.args.name });
+      if (!resolver) {
+        return c.error({
+          code: "NO_RESOLVER",
+          message: `No resolver found for ${c.args.name}`,
+          exitCode: 1,
+        });
+      }
+
+      const walletClient = createWalletClient({
+        account,
+        chain,
+        transport: http(),
+      }).extend(ensWalletActions);
+
+      const txHash = await walletClient.setTextRecord({
+        name: c.args.name,
+        key: name,
+        value: c.args.uri,
+        resolverAddress: resolver,
+      });
+
+      const etherscan =
+        c.options.network === "mainnet"
+          ? `https://etherscan.io/tx/${txHash}`
+          : `https://sepolia.etherscan.io/tx/${txHash}`;
+
+      return {
+        name: c.args.name,
+        key: name,
+        value: c.args.uri,
+        txHash,
+        etherscan,
+      };
     },
   });
 
