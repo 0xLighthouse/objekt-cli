@@ -6,5 +6,5 @@ export default createEnsMediaCommand({
   name: "avatar",
   description: "Manage ENS avatars",
   mediaType: MEDIA_TYPES.avatar,
-  pathSuffix: "",
+  pathSuffix: "/avatar",
 });

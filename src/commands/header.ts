@@ -6,5 +6,5 @@ export default createEnsMediaCommand({
   name: "header",
   description: "Manage ENS headers",
   mediaType: MEDIA_TYPES.cover,
-  pathSuffix: "/h",
+  pathSuffix: "/header",
 });

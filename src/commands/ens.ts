@@ -3,6 +3,7 @@ import { Cli } from "incur";
 import avatar from "./avatar";
 import contenthash from "./contenthash";
 import header from "./header";
+import metadata from "./metadata";
 
 const ens = Cli.create("ens", {
   description:
@@ -12,5 +13,6 @@ const ens = Cli.create("ens", {
 ens.command(avatar);
 ens.command(header);
 ens.command(contenthash);
+ens.command(metadata);
 
 export default ens;
