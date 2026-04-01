@@ -1,25 +1,31 @@
-import type { MediaTypeConfig } from "@objekt/shared";
 import {
   addEnsContracts,
   ensPublicActions,
   ensWalletActions,
 } from "@ensdomains/ensjs";
-import { isEncrypted, Namespace, ENCRYPTED_MIME, generateViewKey, parseViewKey } from "@objekt.sh/ecies";
+import type { MediaTypeConfig } from "@objekt/shared";
+import {
+  ENCRYPTED_MIME,
+  generateViewKey,
+  isEncrypted,
+  Namespace,
+  parseViewKey,
+} from "@objekt.sh/ecies";
 import { Cli, z } from "incur";
 import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
 import { getEnsApiUrl } from "../api";
-import { createOwsAccount } from "../ows-account";
 import {
-  deriveEncryptionKeypair,
-  deriveAllEncryptionKeypairs,
-  encryptForRecipients,
   decryptEnvelope,
+  deriveAllEncryptionKeypairs,
+  deriveEncryptionKeypair,
+  encryptForRecipients,
   resolveRecipient,
 } from "../crypto";
 import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
+import { createOwsAccount } from "../ows-account";
 import { signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
@@ -42,8 +48,14 @@ export function createEnsMediaCommand({
       name: z.string().describe("ENS name (e.g. 1a35e1.eth)"),
     }),
     options: z.object({
-      ows: z.string().optional().describe("OWS wallet name (required to decrypt encrypted content)"),
-      viewKey: z.string().optional().describe("View key to decrypt (objekt_vk_...)"),
+      ows: z
+        .string()
+        .optional()
+        .describe("OWS wallet name (required to decrypt encrypted content)"),
+      viewKey: z
+        .string()
+        .optional()
+        .describe("View key to decrypt (objekt_vk_...)"),
       network: z
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
@@ -78,7 +90,8 @@ export function createEnsMediaCommand({
         if (!c.options.ows && !c.options.viewKey) {
           return c.error({
             code: "ENCRYPTED",
-            message: "Content is encrypted. Provide --ows <wallet> or --view-key to decrypt.",
+            message:
+              "Content is encrypted. Provide --ows <wallet> or --view-key to decrypt.",
             exitCode: 1,
           });
         }
@@ -140,7 +153,9 @@ export function createEnsMediaCommand({
       viewKey: z
         .boolean()
         .default(false)
-        .describe("Generate a shareable view key for decryption without a wallet"),
+        .describe(
+          "Generate a shareable view key for decryption without a wallet",
+        ),
       estimate: z
         .boolean()
         .optional()
@@ -148,7 +163,10 @@ export function createEnsMediaCommand({
     }),
     alias: { file: "f", ows: "w" },
     async run(c) {
-      let { bytes, dataURL, mime } = await readMediaFile(c.options.file, mediaType);
+      let { bytes, dataURL, mime } = await readMediaFile(
+        c.options.file,
+        mediaType,
+      );
 
       if (c.options.estimate) {
         return estimateUpload({ ...c.options, bytes: bytes.byteLength });
@@ -165,11 +183,18 @@ export function createEnsMediaCommand({
 
       // Encrypt if requested
       let viewKeyStr: string | undefined;
-      if (c.options.encrypt || c.options.encryptFor?.length || c.options.viewKey) {
+      if (
+        c.options.encrypt ||
+        c.options.encryptFor?.length ||
+        c.options.viewKey
+      ) {
         const recipients = [];
 
         // Always include self
-        const selfKey = deriveEncryptionKeypair(c.options.ows, Namespace.EIP155);
+        const selfKey = deriveEncryptionKeypair(
+          c.options.ows,
+          Namespace.EIP155,
+        );
         recipients.push({ pubKey: selfKey.publicKey, curve: selfKey.curve });
 
         // Add explicit recipients
@@ -223,7 +248,11 @@ export function createEnsMediaCommand({
 
       const data = await res.json();
       const payment = extractPaymentReceipt(res);
-      return { ...data, ...(viewKeyStr && { viewKey: viewKeyStr }), ...(payment && { payment }) };
+      return {
+        ...data,
+        ...(viewKeyStr && { viewKey: viewKeyStr }),
+        ...(payment && { payment }),
+      };
     },
   });
 
@@ -236,7 +265,9 @@ export function createEnsMediaCommand({
     description: `Set the ENS ${name} text record on-chain`,
     args: z.object({
       name: z.string().describe("ENS name (e.g. 1a35e1.eth)"),
-      uri: z.string().describe("URI to set (e.g. https://ens.objekt.sh/1a35e1.eth/avatar)"),
+      uri: z
+        .string()
+        .describe("URI to set (e.g. https://ens.objekt.sh/1a35e1.eth/avatar)"),
     }),
     options: z.object({
       ows: z.string().describe("OWS wallet name"),

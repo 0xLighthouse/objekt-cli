@@ -1,13 +1,19 @@
 import { MIME_MAP } from "@objekt/shared";
-import { isEncrypted, Namespace, ENCRYPTED_MIME, generateViewKey, parseViewKey } from "@objekt.sh/ecies";
+import {
+  ENCRYPTED_MIME,
+  generateViewKey,
+  isEncrypted,
+  Namespace,
+  parseViewKey,
+} from "@objekt.sh/ecies";
 import { Cli, z } from "incur";
 
 import { getApiUrl } from "../api";
 import {
-  deriveEncryptionKeypair,
-  deriveAllEncryptionKeypairs,
-  encryptForRecipients,
   decryptEnvelope,
+  deriveAllEncryptionKeypairs,
+  deriveEncryptionKeypair,
+  encryptForRecipients,
   resolveRecipient,
 } from "../crypto";
 import { estimateUpload } from "../estimate";
@@ -20,8 +26,14 @@ const get = Cli.create("get", {
     key: z.string().describe("Media key (e.g. proposals/0x.../media/abc)"),
   }),
   options: z.object({
-    ows: z.string().optional().describe("OWS wallet name (required to decrypt encrypted content)"),
-    viewKey: z.string().optional().describe("View key to decrypt (objekt_vk_...)"),
+    ows: z
+      .string()
+      .optional()
+      .describe("OWS wallet name (required to decrypt encrypted content)"),
+    viewKey: z
+      .string()
+      .optional()
+      .describe("View key to decrypt (objekt_vk_...)"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
@@ -62,7 +74,8 @@ const get = Cli.create("get", {
       if (!c.options.ows && !c.options.viewKey) {
         return c.error({
           code: "ENCRYPTED",
-          message: "Content is encrypted. Provide --ows <wallet> or --view-key to decrypt.",
+          message:
+            "Content is encrypted. Provide --ows <wallet> or --view-key to decrypt.",
           exitCode: 1,
         });
       }
@@ -119,7 +132,9 @@ const put = Cli.create("put", {
     viewKey: z
       .boolean()
       .default(false)
-      .describe("Generate a shareable view key for decryption without a wallet"),
+      .describe(
+        "Generate a shareable view key for decryption without a wallet",
+      ),
     estimate: z
       .boolean()
       .optional()
@@ -132,7 +147,10 @@ const put = Cli.create("put", {
     bytes: z.number(),
     uri: z.string().optional(),
     permalink: z.string(),
-    viewKey: z.string().optional().describe("Shareable view key for decryption"),
+    viewKey: z
+      .string()
+      .optional()
+      .describe("Shareable view key for decryption"),
     payment: z
       .object({
         txHash: z.string(),
@@ -205,7 +223,11 @@ const put = Cli.create("put", {
 
     // Encrypt if requested
     let viewKeyStr: string | undefined;
-    if (c.options.encrypt || c.options.encryptFor?.length || c.options.viewKey) {
+    if (
+      c.options.encrypt ||
+      c.options.encryptFor?.length ||
+      c.options.viewKey
+    ) {
       const recipients = [];
 
       const selfKey = deriveEncryptionKeypair(ows, Namespace.EIP155);
@@ -278,7 +300,11 @@ const put = Cli.create("put", {
 
     const data = await res.json();
     const payment = extractPaymentReceipt(res);
-    return { ...data, ...(viewKeyStr && { viewKey: viewKeyStr }), ...(payment && { payment }) };
+    return {
+      ...data,
+      ...(viewKeyStr && { viewKey: viewKeyStr }),
+      ...(payment && { payment }),
+    };
   },
 });
 

@@ -1,7 +1,7 @@
 import {
-  typedDataParameters,
   revealDepositTypedDataParameters,
   revealRemoveTypedDataParameters,
+  typedDataParameters,
 } from "@objekt/shared";
 import {
   getWallet,

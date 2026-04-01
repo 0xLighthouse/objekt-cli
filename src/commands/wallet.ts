@@ -1,10 +1,11 @@
+import { ALL_NAMESPACES } from "@objekt.sh/ecies";
 import {
   createWallet,
   importWalletPrivateKey,
   listWallets,
 } from "@open-wallet-standard/core";
 import { Cli, z } from "incur";
-import { ALL_NAMESPACES } from "@objekt.sh/ecies";
+
 import { deriveEncryptionKeypair } from "../crypto";
 
 const wallet = Cli.create("wallet", {
@@ -111,7 +112,9 @@ wallet.command("encryption-key", {
     chain: z
       .string()
       .optional()
-      .describe("CAIP-2 namespace or name (eip155, bip122, solana, ethereum, bitcoin, ...). Shows all if omitted."),
+      .describe(
+        "CAIP-2 namespace or name (eip155, bip122, solana, ethereum, bitcoin, ...). Shows all if omitted.",
+      ),
   }),
   output: z.object({
     keys: z.array(
@@ -134,9 +137,7 @@ wallet.command("encryption-key", {
     },
   ],
   run(c) {
-    const chains = c.options.chain
-      ? [c.options.chain]
-      : [...ALL_NAMESPACES];
+    const chains = c.options.chain ? [c.options.chain] : [...ALL_NAMESPACES];
 
     const keys: { namespace: string; curve: string; publicKey: string }[] = [];
 
@@ -156,7 +157,8 @@ wallet.command("encryption-key", {
     if (keys.length === 0) {
       return c.error({
         code: "NO_KEYS",
-        message: "Could not derive encryption keys — wallet has no supported chain accounts",
+        message:
+          "Could not derive encryption keys — wallet has no supported chain accounts",
         exitCode: 1,
       });
     }

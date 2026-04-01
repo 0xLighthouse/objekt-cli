@@ -39,6 +39,7 @@ export function getRevealApiUrl(options: {
   const defaultBase = isTestnet(options)
     ? "https://stage.reveal.objekt.sh"
     : "https://reveal.objekt.sh";
-  const base = options.revealApi || process.env.OBJEKT_REVEAL_API || defaultBase;
+  const base =
+    options.revealApi || process.env.OBJEKT_REVEAL_API || defaultBase;
   return buildUrl(base, options.network);
 }

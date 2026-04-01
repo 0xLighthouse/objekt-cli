@@ -8,15 +8,22 @@ import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 const deposit = Cli.create("deposit", {
   description: "Deposit a view key for pay-to-reveal",
   args: z.object({
-    name: z.string().describe("ENS name (1a35e1.eth) or wallet address (0x...)"),
+    name: z
+      .string()
+      .describe("ENS name (1a35e1.eth) or wallet address (0x...)"),
     keyName: z.string().describe("Key name (e.g. phone, email, telegram)"),
   }),
   options: z.object({
     ows: z.string().describe("OWS wallet name"),
     viewKey: z.string().describe("View key to deposit (objekt_vk_...)"),
     price: z.string().describe("Price in USD (e.g. 5.00)"),
-    contentUri: z.string().describe("Content URI (ar://..., ipfs://..., or CDN URL)"),
-    ttl: z.string().default("1d").describe("Time to live (e.g. 30m, 2h, 1d, 1w)"),
+    contentUri: z
+      .string()
+      .describe("Content URI (ar://..., ipfs://..., or CDN URL)"),
+    ttl: z
+      .string()
+      .default("1d")
+      .describe("Time to live (e.g. 30m, 2h, 1d, 1w)"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
