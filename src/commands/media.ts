@@ -143,7 +143,7 @@ const put = Cli.create("put", {
   examples: [
     {
       args: { file: "./image.png" },
-      options: { ows: "my-wallet" },
+      options: { ows: "my-wallet", storage: "cdn" },
       description: "Upload to CDN (free, 90-day cache)",
     },
     {
