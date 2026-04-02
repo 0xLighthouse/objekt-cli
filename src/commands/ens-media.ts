@@ -172,10 +172,7 @@ export function createEnsMediaCommand({
       const log = createLogger(c.options.v);
 
       log.info(`Reading ${c.options.file}...`);
-      let { bytes, dataURL, mime } = await readMediaFile(
-        c.options.file,
-        mediaType,
-      );
+      let { bytes, mime } = await readMediaFile(c.options.file, mediaType);
       log.info(`Read ${c.options.file} (${formatSize(bytes.byteLength)})`);
       log.detail(`Content-Type: ${mime}`);
 
@@ -191,6 +188,8 @@ export function createEnsMediaCommand({
           exitCode: 1,
         });
       }
+
+      let uploadMime = mime;
 
       // Encrypt if requested
       let viewKeyStr: string | undefined;
@@ -227,7 +226,7 @@ export function createEnsMediaCommand({
         log.info(`Encrypting for ${recipients.length} recipient(s)...`);
         const encrypted = encryptForRecipients(bytes, recipients, { mime });
         bytes = encrypted;
-        dataURL = `data:${ENCRYPTED_MIME};base64,${Buffer.from(encrypted).toString("base64")}`;
+        uploadMime = ENCRYPTED_MIME;
         log.detail(`Encrypted size: ${formatSize(bytes.byteLength)}`);
       }
 
@@ -250,10 +249,19 @@ export function createEnsMediaCommand({
       log.info(`Uploading ${name} to ${c.options.storage}...`);
       log.detail(`PUT ${url}${storageParam}`);
 
+      const form = new FormData();
+      form.append(
+        "file",
+        new Blob([bytes], { type: uploadMime }),
+        c.options.file,
+      );
+      form.append("sig", sig);
+      form.append("expiry", expiry);
+      form.append("unverifiedAddress", unverifiedAddress);
+
       const res = await doFetch(`${url}${storageParam}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),
+        body: form,
       });
 
       if (!res.ok) {

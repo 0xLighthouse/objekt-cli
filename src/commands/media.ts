@@ -233,7 +233,7 @@ const put = Cli.create("put", {
 
     log.detail(`Content-Type: ${mime}`);
 
-    let dataURL = `data:${mime};base64,${buffer.toString("base64")}`;
+    let uploadMime = mime;
 
     // Encrypt if requested
     let viewKeyStr: string | undefined;
@@ -265,7 +265,7 @@ const put = Cli.create("put", {
       log.info(`Encrypting for ${recipients.length} recipient(s)...`);
       const encrypted = encryptForRecipients(bytes, recipients, { mime });
       bytes = encrypted;
-      dataURL = `data:${ENCRYPTED_MIME};base64,${Buffer.from(encrypted).toString("base64")}`;
+      uploadMime = ENCRYPTED_MIME;
       log.detail(`Encrypted size: ${formatSize(bytes.byteLength)}`);
     }
 
@@ -291,12 +291,17 @@ const put = Cli.create("put", {
     log.info(`Uploading to ${c.options.storage}...`);
     log.detail(`PUT ${url}${tierParam}`);
 
+    const form = new FormData();
+    form.append("file", new Blob([bytes], { type: uploadMime }), resolvedKey);
+    form.append("sig", sig);
+    form.append("expiry", expiry);
+    form.append("unverifiedAddress", unverifiedAddress);
+
     let res: Response;
     try {
       res = await doFetch(`${url}${tierParam}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expiry, dataURL, sig, unverifiedAddress }),
+        body: form,
       });
     } catch (e) {
       return c.error({
