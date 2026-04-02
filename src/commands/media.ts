@@ -119,9 +119,10 @@ const put = Cli.create("put", {
     testnet: z.boolean().default(false).describe("Use testnet"),
     api: z.string().optional().describe("API base URL"),
     storage: z
-      .enum(["cdn", "arweave", "ipfs"])
-      .default("ipfs")
-      .describe("Storage backend"),
+      .enum(["cdn", "arweave", "ipfs"], {
+        required_error: "--storage is required. Options: cdn, arweave, ipfs",
+      })
+      .describe("Storage backend (cdn, arweave, or ipfs)"),
     encrypt: z
       .boolean()
       .default(false)
