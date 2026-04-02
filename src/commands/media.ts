@@ -9,7 +9,6 @@ import {
 import { Cli, z } from "incur";
 
 import { getApiUrl } from "../api";
-import { createLogger, formatSize } from "../log";
 import {
   decryptEnvelope,
   deriveAllEncryptionKeypairs,
@@ -18,6 +17,7 @@ import {
   resolveRecipient,
 } from "../crypto";
 import { estimateUpload } from "../estimate";
+import { createLogger, formatSize } from "../log";
 import { getWalletAddress, signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
@@ -218,7 +218,9 @@ const put = Cli.create("put", {
     let bytes: Uint8Array = new Uint8Array(buffer);
     const ext = extname(c.args.file).toLowerCase();
 
-    log.info(`Reading ${basename(c.args.file)} (${formatSize(buffer.byteLength)})...`);
+    log.info(
+      `Reading ${basename(c.args.file)} (${formatSize(buffer.byteLength)})...`,
+    );
 
     const mime = MIME_MAP[ext];
     if (!mime) {

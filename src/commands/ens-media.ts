@@ -16,7 +16,6 @@ import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
 import { getEnsApiUrl } from "../api";
-import { createLogger, formatSize } from "../log";
 import {
   decryptEnvelope,
   deriveAllEncryptionKeypairs,
@@ -26,6 +25,7 @@ import {
 } from "../crypto";
 import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
+import { createLogger, formatSize } from "../log";
 import { createOwsAccount } from "../ows-account";
 import { signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
