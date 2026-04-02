@@ -9,6 +9,7 @@ import {
 import { Cli, z } from "incur";
 
 import { getApiUrl } from "../api";
+import { createLogger, formatSize } from "../log";
 import {
   decryptEnvelope,
   deriveAllEncryptionKeypairs,
@@ -139,8 +140,13 @@ const put = Cli.create("put", {
       .boolean()
       .optional()
       .describe("Show cost estimate without uploading"),
+    v: z
+      .number()
+      .default(0)
+      .meta({ count: true })
+      .describe("Verbosity (-v, -vv, -vvv)"),
   }),
-  alias: { key: "k", ows: "w" },
+  alias: { key: "k", ows: "w", v: "v" },
   output: z.object({
     name: z.string(),
     kind: z.string(),
@@ -181,6 +187,7 @@ const put = Cli.create("put", {
     },
   ],
   async run(c) {
+    const log = createLogger(c.options.v);
     const { readFile } = await import("node:fs/promises");
     const { basename, extname } = await import("node:path");
     const { stat } = await import("node:fs/promises");
@@ -210,6 +217,8 @@ const put = Cli.create("put", {
     let bytes: Uint8Array = new Uint8Array(buffer);
     const ext = extname(c.args.file).toLowerCase();
 
+    log.info(`Reading ${basename(c.args.file)} (${formatSize(buffer.byteLength)})...`);
+
     const mime = MIME_MAP[ext];
     if (!mime) {
       return c.error({
@@ -218,6 +227,8 @@ const put = Cli.create("put", {
         exitCode: 1,
       });
     }
+
+    log.detail(`Content-Type: ${mime}`);
 
     let dataURL = `data:${mime};base64,${buffer.toString("base64")}`;
 
@@ -235,6 +246,7 @@ const put = Cli.create("put", {
 
       if (c.options.encryptFor) {
         for (const r of c.options.encryptFor) {
+          log.detail(`Resolving recipient: ${r}`);
           const resolved = await resolveRecipient(r, c.options.network);
           recipients.push(resolved);
         }
@@ -244,16 +256,20 @@ const put = Cli.create("put", {
         const vk = generateViewKey();
         recipients.push(vk.recipient);
         viewKeyStr = vk.viewKey;
+        log.detail("Generated view key");
       }
 
+      log.info(`Encrypting for ${recipients.length} recipient(s)...`);
       const encrypted = encryptForRecipients(bytes, recipients, { mime });
       bytes = encrypted;
       dataURL = `data:${ENCRYPTED_MIME};base64,${Buffer.from(encrypted).toString("base64")}`;
+      log.detail(`Encrypted size: ${formatSize(bytes.byteLength)}`);
     }
 
     const { getAddress } = await import("viem");
     const address = getAddress(getWalletAddress(c.options.ows));
 
+    log.info("Signing upload...");
     const { sig, expiry, unverifiedAddress } = signUpload({
       wallet: c.options.ows,
       name: address,
@@ -268,6 +284,9 @@ const put = Cli.create("put", {
       c.options.storage !== "cdn"
         ? createPaymentFetch(ows, c.options.testnet)
         : fetch;
+
+    log.info(`Uploading to ${c.options.storage}...`);
+    log.detail(`PUT ${url}${tierParam}`);
 
     let res: Response;
     try {
@@ -299,6 +318,8 @@ const put = Cli.create("put", {
     }
 
     const data = await res.json();
+    log.info("Upload complete");
+    log.debug(`Response: ${JSON.stringify(data)}`);
     const payment = extractPaymentReceipt(res);
     return {
       ...data,

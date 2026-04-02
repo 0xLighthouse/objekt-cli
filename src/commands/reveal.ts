@@ -2,6 +2,7 @@ import { Cli, z } from "incur";
 import { sha256 } from "viem";
 
 import { getRevealApiUrl } from "../api";
+import { createLogger } from "../log";
 import { signRevealDeposit, signRevealRemove } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
@@ -88,8 +89,13 @@ const buy = Cli.create("buy", {
       .describe("Network"),
     testnet: z.boolean().default(false).describe("Use testnet"),
     revealApi: z.string().optional().describe("Reveal API base URL"),
+    v: z
+      .number()
+      .default(0)
+      .meta({ count: true })
+      .describe("Verbosity (-v, -vv, -vvv)"),
   }),
-  alias: { ows: "w" },
+  alias: { ows: "w", v: "v" },
   output: z.object({
     viewKey: z.string(),
     contentUri: z.string(),
@@ -102,8 +108,12 @@ const buy = Cli.create("buy", {
       .optional(),
   }),
   async run(c) {
+    const log = createLogger(c.options.v);
     const url = `${getRevealApiUrl(c.options)}/${c.args.name}/${c.args.keyName}`;
     const doFetch = createPaymentFetch(c.options.ows, c.options.testnet);
+
+    log.info(`Purchasing view key for ${c.args.name}/${c.args.keyName}...`);
+    log.detail(`GET ${url}`);
 
     const res = await doFetch(url);
 
@@ -122,6 +132,8 @@ const buy = Cli.create("buy", {
     }
 
     const data = await res.json();
+    log.info("Purchase complete");
+    log.debug(`Response: ${JSON.stringify(data)}`);
     const payment = extractPaymentReceipt(res);
     return { ...data, ...(payment && { payment }) };
   },

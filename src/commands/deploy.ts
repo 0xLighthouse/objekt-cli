@@ -6,6 +6,7 @@ import { Cli, z } from "incur";
 import { sha256 } from "viem";
 
 import { getApiUrl } from "../api";
+import { createLogger, formatSize } from "../log";
 import { getWalletAddress, signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
@@ -67,8 +68,13 @@ const deploy = Cli.create("deploy", {
       .describe(
         "Storage: tmp (7d preview) or ipfs (permanent, sets contenthash)",
       ),
+    v: z
+      .number()
+      .default(0)
+      .meta({ count: true })
+      .describe("Verbosity (-v, -vv, -vvv)"),
   }),
-  alias: { ows: "w" },
+  alias: { ows: "w", v: "v" },
   output: z.object({
     url: z.string(),
     hash: z.string(),
@@ -79,6 +85,8 @@ const deploy = Cli.create("deploy", {
     contenthash: z.string().optional(),
   }),
   async run(c) {
+    const log = createLogger(c.options.v);
+
     if (c.args.directory === "list") {
       const history = await loadDeployHistory();
       return history.map((h: Record<string, unknown>) => ({
@@ -114,6 +122,8 @@ const deploy = Cli.create("deploy", {
       });
     }
 
+    log.info(`Scanning ${dir}...`);
+
     // Pre-scan: count files and total size before reading into memory
     const entries = await readdir(dir, { recursive: true });
     const filePaths: { entry: string; fullPath: string; size: number }[] = [];
@@ -130,6 +140,8 @@ const deploy = Cli.create("deploy", {
       totalSize += fileStat.size;
       filePaths.push({ entry, fullPath, size: fileStat.size });
     }
+
+    log.info(`Found ${filePaths.length} files (${formatSize(totalSize)})`);
 
     if (filePaths.length === 0) {
       return c.error({
@@ -157,7 +169,8 @@ const deploy = Cli.create("deploy", {
 
     // Read files into memory
     const files: { path: string; buffer: Buffer }[] = [];
-    for (const { entry, fullPath } of filePaths) {
+    for (const { entry, fullPath, size } of filePaths) {
+      log.detail(`Reading ${entry} (${formatSize(size)})`);
       files.push({ path: entry, buffer: await readFile(fullPath) });
     }
 
@@ -170,9 +183,11 @@ const deploy = Cli.create("deploy", {
     const sorted = [...files].sort((a, b) => a.path.localeCompare(b.path));
     const combined = Buffer.concat(sorted.map((f) => f.buffer));
     const hash = sha256(new Uint8Array(combined));
+    log.detail(`Deploy hash: ${hash.slice(0, 18)}...`);
 
     // Sign with wallet
     const address = getWalletAddress(ows);
+    log.info("Signing deploy...");
     const { sig, expiry, unverifiedAddress } = signUpload({
       wallet: ows,
       name: address,
@@ -192,6 +207,9 @@ const deploy = Cli.create("deploy", {
       c.options.storage === "ipfs"
         ? createPaymentFetch(ows, c.options.testnet)
         : fetch;
+
+    log.info(`Deploying ${files.length} files to ${c.options.storage}...`);
+    log.detail(`POST ${url}`);
 
     let res: Response;
     try {
@@ -229,6 +247,8 @@ const deploy = Cli.create("deploy", {
     }
 
     const data = await res.json();
+    log.info("Deploy complete");
+    log.debug(`Response: ${JSON.stringify(data)}`);
     const payment = extractPaymentReceipt(res);
     const result = payment ? { ...data, payment } : data;
 

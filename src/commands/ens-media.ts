@@ -16,6 +16,7 @@ import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
 import { getEnsApiUrl } from "../api";
+import { createLogger, formatSize } from "../log";
 import {
   decryptEnvelope,
   deriveAllEncryptionKeypairs,
@@ -160,13 +161,23 @@ export function createEnsMediaCommand({
         .boolean()
         .optional()
         .describe("Show cost estimate without uploading. No wallet needed."),
+      v: z
+        .number()
+        .default(0)
+        .meta({ count: true })
+        .describe("Verbosity (-v, -vv, -vvv)"),
     }),
-    alias: { file: "f", ows: "w" },
+    alias: { file: "f", ows: "w", v: "v" },
     async run(c) {
+      const log = createLogger(c.options.v);
+
+      log.info(`Reading ${c.options.file}...`);
       let { bytes, dataURL, mime } = await readMediaFile(
         c.options.file,
         mediaType,
       );
+      log.info(`Read ${c.options.file} (${formatSize(bytes.byteLength)})`);
+      log.detail(`Content-Type: ${mime}`);
 
       if (c.options.estimate) {
         return estimateUpload({ ...c.options, bytes: bytes.byteLength });
@@ -200,6 +211,7 @@ export function createEnsMediaCommand({
         // Add explicit recipients
         if (c.options.encryptFor) {
           for (const r of c.options.encryptFor) {
+            log.detail(`Resolving recipient: ${r}`);
             const resolved = await resolveRecipient(r, c.options.network);
             recipients.push(resolved);
           }
@@ -209,13 +221,17 @@ export function createEnsMediaCommand({
           const vk = generateViewKey();
           recipients.push(vk.recipient);
           viewKeyStr = vk.viewKey;
+          log.detail("Generated view key");
         }
 
+        log.info(`Encrypting for ${recipients.length} recipient(s)...`);
         const encrypted = encryptForRecipients(bytes, recipients, { mime });
         bytes = encrypted;
         dataURL = `data:${ENCRYPTED_MIME};base64,${Buffer.from(encrypted).toString("base64")}`;
+        log.detail(`Encrypted size: ${formatSize(bytes.byteLength)}`);
       }
 
+      log.info("Signing upload...");
       const { sig, expiry, unverifiedAddress } = signUpload({
         wallet: c.options.ows,
         name: c.args.name,
@@ -230,6 +246,9 @@ export function createEnsMediaCommand({
         c.options.storage !== "cdn"
           ? createPaymentFetch(c.options.ows, c.options.testnet)
           : fetch;
+
+      log.info(`Uploading ${name} to ${c.options.storage}...`);
+      log.detail(`PUT ${url}${storageParam}`);
 
       const res = await doFetch(`${url}${storageParam}`, {
         method: "PUT",
@@ -247,6 +266,8 @@ export function createEnsMediaCommand({
       }
 
       const data = await res.json();
+      log.info("Upload complete");
+      log.debug(`Response: ${JSON.stringify(data)}`);
       const payment = extractPaymentReceipt(res);
       return {
         ...data,
