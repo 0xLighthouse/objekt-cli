@@ -1,18 +1,19 @@
-import { addEnsContracts, ensPublicActions } from "@ensdomains/ensjs";
-import type { ChainWithEns } from "@ensdomains/ensjs/contracts";
-import { setContentHashRecord } from "@ensdomains/ensjs/wallet";
+import {
+  addEnsContracts,
+  ensPublicActions,
+  ensWalletActions,
+} from "@ensdomains/ensjs";
 import { Cli, z } from "incur";
 import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
-import { estimateGasWithBuffer } from "../gas";
 import { createLogger } from "../log";
 import { createOwsAccount } from "../ows-account";
 
-const CHAINS: Record<string, ChainWithEns> = {
+const CHAINS = {
   mainnet: addEnsContracts(mainnet),
   sepolia: addEnsContracts(sepolia),
-};
+} as const;
 
 const contenthash = Cli.create("contenthash", {
   description: "Get or set ENS contenthash records",
@@ -24,6 +25,7 @@ contenthash.command("get", {
     name: z.string().describe("ENS name (e.g. vitalik.eth)"),
   }),
   options: z.object({
+    rpc: z.string().optional().describe("Custom RPC URL"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
@@ -36,9 +38,10 @@ contenthash.command("get", {
   }),
   async run(c) {
     const chain = CHAINS[c.options.network];
+    const rpcUrl = c.options.rpc ?? process.env.ETH_RPC_URL;
     const client = createClient({
       chain,
-      transport: http(),
+      transport: http(rpcUrl),
     }).extend(ensPublicActions);
 
     const result = await client.getContentHashRecord({
@@ -61,6 +64,7 @@ contenthash.command("set", {
   }),
   options: z.object({
     ows: z.string().describe("OWS wallet name"),
+    rpc: z.string().optional().describe("Custom RPC URL"),
     network: z
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
@@ -82,7 +86,15 @@ contenthash.command("set", {
   async run(c) {
     const chain = CHAINS[c.options.network];
     const log = createLogger(c.options.v);
+    const rpcUrl = c.options.rpc ?? process.env.ETH_RPC_URL;
     const account = createOwsAccount(c.options.ows);
+
+    if (!rpcUrl) {
+      log.info(
+        "Warning: Using default public RPC. Pass --rpc <url> or set ETH_RPC_URL for reliability.",
+      );
+    }
+    log.debug(`RPC: ${rpcUrl ?? "default public"}`);
 
     log.info(`Setting contenthash for ${c.args.name}`);
     log.detail(`URI: ${c.args.uri}`);
@@ -92,7 +104,7 @@ contenthash.command("set", {
     // Public client for reading resolver address
     const publicClient = createClient({
       chain,
-      transport: http(),
+      transport: http(rpcUrl),
     }).extend(ensPublicActions);
 
     // Get resolver address
@@ -110,29 +122,14 @@ contenthash.command("set", {
     const walletClient = createWalletClient({
       account,
       chain,
-      transport: http(),
-    });
-
-    // Estimate gas + verify balance before sending
-    const txData = setContentHashRecord.makeFunctionData(walletClient, {
-      name: c.args.name,
-      contentHash: c.args.uri,
-      resolverAddress: resolver,
-    });
-    const gas = await estimateGasWithBuffer({
-      chain,
-      account: account.address,
-      to: txData.to,
-      data: txData.data,
-      log,
-    });
+      transport: http(rpcUrl),
+    }).extend(ensWalletActions);
 
     log.info("Sending transaction...");
-    const txHash = await setContentHashRecord(walletClient, {
+    const txHash = await walletClient.setContentHashRecord({
       name: c.args.name,
       contentHash: c.args.uri,
       resolverAddress: resolver,
-      gas,
     });
     log.info("Transaction sent");
     log.debug(`txHash: ${txHash}`);

@@ -1,6 +1,8 @@
-import { addEnsContracts, ensPublicActions } from "@ensdomains/ensjs";
-import type { ChainWithEns } from "@ensdomains/ensjs/contracts";
-import { setTextRecord } from "@ensdomains/ensjs/wallet";
+import {
+  addEnsContracts,
+  ensPublicActions,
+  ensWalletActions,
+} from "@ensdomains/ensjs";
 import type { MediaTypeConfig } from "@objekt/shared";
 import {
   ENCRYPTED_MIME,
@@ -23,7 +25,6 @@ import {
 } from "../crypto";
 import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
-import { estimateGasWithBuffer } from "../gas";
 import { createLogger, formatSize } from "../log";
 import { createOwsAccount } from "../ows-account";
 import { signUpload } from "../sign";
@@ -287,7 +288,7 @@ export function createEnsMediaCommand({
   const CHAINS = {
     mainnet: addEnsContracts(mainnet),
     sepolia: addEnsContracts(sepolia),
-  } as Record<string, ChainWithEns>;
+  } as const;
 
   cli.command("set", {
     description: `Set the ENS ${name} text record on-chain`,
@@ -299,6 +300,7 @@ export function createEnsMediaCommand({
     }),
     options: z.object({
       ows: z.string().describe("OWS wallet name"),
+      rpc: z.string().optional().describe("Custom RPC URL"),
       network: z
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
@@ -320,16 +322,24 @@ export function createEnsMediaCommand({
     async run(c) {
       const chain = CHAINS[c.options.network];
       const log = createLogger(c.options.v);
+      const rpcUrl = c.options.rpc ?? process.env.ETH_RPC_URL;
       const account = createOwsAccount(c.options.ows);
+
+      if (!rpcUrl) {
+        log.info(
+          "Warning: Using default public RPC. Pass --rpc <url> or set ETH_RPC_URL for reliability.",
+        );
+      }
 
       log.info(`Setting ${name} text record for ${c.args.name}`);
       log.detail(`Value: ${c.args.uri}`);
       log.debug(`Network: ${c.options.network}`);
+      log.debug(`RPC: ${rpcUrl ?? "default public"}`);
       log.debug(`Account: ${account.address}`);
 
       const publicClient = createClient({
         chain,
-        transport: http(),
+        transport: http(rpcUrl),
       }).extend(ensPublicActions);
 
       const resolver = await publicClient.getResolver({ name: c.args.name });
@@ -345,31 +355,15 @@ export function createEnsMediaCommand({
       const walletClient = createWalletClient({
         account,
         chain,
-        transport: http(),
-      });
-
-      // Estimate gas + verify balance before sending
-      const txData = setTextRecord.makeFunctionData(walletClient, {
-        name: c.args.name,
-        key: name,
-        value: c.args.uri,
-        resolverAddress: resolver,
-      });
-      const gas = await estimateGasWithBuffer({
-        chain,
-        account: account.address,
-        to: txData.to,
-        data: txData.data,
-        log,
-      });
+        transport: http(rpcUrl),
+      }).extend(ensWalletActions);
 
       log.info("Sending transaction...");
-      const txHash = await setTextRecord(walletClient, {
+      const txHash = await walletClient.setTextRecord({
         name: c.args.name,
         key: name,
         value: c.args.uri,
         resolverAddress: resolver,
-        gas,
       });
       log.info("Transaction sent");
       log.debug(`txHash: ${txHash}`);
