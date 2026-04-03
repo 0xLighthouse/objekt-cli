@@ -1,7 +1,7 @@
 {
   "name": "@objekt.sh/cli",
   "license": "AGPL-3.0-only",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/0xLighthouse/objekt-cli"
