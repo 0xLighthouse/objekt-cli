@@ -10,6 +10,8 @@ jobs:
     permissions:
       id-token: write
       actions: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -19,10 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: Upgrade npm for Trusted Publishing
-        run: npm install -g npm@11 --force
+          node-version: 24
 
       - name: Download release tarball
         run: gh release download "${{ github.event.release.tag_name }}" --pattern "*.tgz"
