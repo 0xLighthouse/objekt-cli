@@ -9,6 +9,7 @@ import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
 import { estimateGasWithBuffer } from "../gas";
+import { createLogger } from "../log";
 import { createOwsAccount } from "../ows-account";
 
 const CHAINS = {
@@ -67,8 +68,13 @@ contenthash.command("set", {
       .enum(["mainnet", "sepolia"])
       .default("mainnet")
       .describe("Network"),
+    v: z
+      .number()
+      .default(0)
+      .meta({ count: true })
+      .describe("Verbosity (-v, -vv, -vvv)"),
   }),
-  alias: { ows: "w" },
+  alias: { ows: "w", v: "v" },
   output: z.object({
     name: z.string(),
     uri: z.string(),
@@ -78,7 +84,13 @@ contenthash.command("set", {
   }),
   async run(c) {
     const chain = CHAINS[c.options.network];
+    const log = createLogger(c.options.v);
     const account = createOwsAccount(c.options.ows);
+
+    log.info(`Setting contenthash for ${c.args.name}`);
+    log.detail(`URI: ${c.args.uri}`);
+    log.debug(`Network: ${c.options.network}`);
+    log.debug(`Account: ${account.address}`);
 
     // Public client for reading resolver address
     const publicClient = createClient({
@@ -95,6 +107,7 @@ contenthash.command("set", {
         exitCode: 1,
       });
     }
+    log.detail(`Resolver: ${resolver}`);
 
     // Wallet client for writing
     const walletClient = createWalletClient({
@@ -114,14 +127,18 @@ contenthash.command("set", {
       account: account.address,
       to: txData.to,
       data: txData.data,
+      log,
     });
 
+    log.info("Sending transaction...");
     const txHash = await walletClient.setContentHashRecord({
       name: c.args.name,
       contentHash: c.args.uri,
       resolverAddress: resolver,
       gas,
     });
+    log.info("Transaction sent");
+    log.debug(`txHash: ${txHash}`);
 
     const etherscan =
       c.options.network === "mainnet"

@@ -3,8 +3,21 @@ import {
   type Chain,
   createPublicClient,
   formatEther,
+  formatGwei,
   http,
 } from "viem";
+
+type Logger = {
+  info: (msg: string) => void;
+  detail: (msg: string) => void;
+  debug: (msg: string) => void;
+};
+
+const noopLogger: Logger = {
+  info: () => {},
+  detail: () => {},
+  debug: () => {},
+};
 
 /**
  * Estimate gas for a transaction with a 3% buffer, and verify the
@@ -16,11 +29,17 @@ export async function estimateGasWithBuffer(options: {
   account: Address;
   to: Address;
   data: `0x${string}`;
+  log?: Logger;
 }): Promise<bigint> {
+  const log = options.log ?? noopLogger;
   const client = createPublicClient({
     chain: options.chain,
     transport: http(),
   });
+
+  log.info("Estimating gas...");
+  log.debug(`to: ${options.to}`);
+  log.debug(`data: ${options.data.slice(0, 10)}...`);
 
   const [gasEstimate, gasPrice, balance] = await Promise.all([
     client.estimateGas({
@@ -35,6 +54,11 @@ export async function estimateGasWithBuffer(options: {
   const gas = (gasEstimate * 103n) / 100n;
   const cost = gas * gasPrice;
 
+  log.detail(`Gas estimate: ${gasEstimate} (+3% buffer → ${gas})`);
+  log.detail(`Gas price: ${formatGwei(gasPrice)} gwei`);
+  log.detail(`Estimated cost: ${formatEther(cost)} ETH`);
+  log.detail(`Wallet balance: ${formatEther(balance)} ETH`);
+
   if (balance < cost) {
     const need = formatEther(cost);
     const have = formatEther(balance);
@@ -43,5 +67,6 @@ export async function estimateGasWithBuffer(options: {
     );
   }
 
+  log.debug(`Balance sufficient (${formatEther(balance - cost)} ETH spare)`);
   return gas;
 }

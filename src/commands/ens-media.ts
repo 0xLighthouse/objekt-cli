@@ -306,8 +306,13 @@ export function createEnsMediaCommand({
         .enum(["mainnet", "sepolia"])
         .default("mainnet")
         .describe("Network"),
+      v: z
+        .number()
+        .default(0)
+        .meta({ count: true })
+        .describe("Verbosity (-v, -vv, -vvv)"),
     }),
-    alias: { ows: "w" },
+    alias: { ows: "w", v: "v" },
     output: z.object({
       name: z.string(),
       key: z.string(),
@@ -317,7 +322,13 @@ export function createEnsMediaCommand({
     }),
     async run(c) {
       const chain = CHAINS[c.options.network];
+      const log = createLogger(c.options.v);
       const account = createOwsAccount(c.options.ows);
+
+      log.info(`Setting ${name} text record for ${c.args.name}`);
+      log.detail(`Value: ${c.args.uri}`);
+      log.debug(`Network: ${c.options.network}`);
+      log.debug(`Account: ${account.address}`);
 
       const publicClient = createClient({
         chain,
@@ -332,6 +343,7 @@ export function createEnsMediaCommand({
           exitCode: 1,
         });
       }
+      log.detail(`Resolver: ${resolver}`);
 
       const walletClient = createWalletClient({
         account,
@@ -351,8 +363,10 @@ export function createEnsMediaCommand({
         account: account.address,
         to: txData.to,
         data: txData.data,
+        log,
       });
 
+      log.info("Sending transaction...");
       const txHash = await walletClient.setTextRecord({
         name: c.args.name,
         key: name,
@@ -360,6 +374,8 @@ export function createEnsMediaCommand({
         resolverAddress: resolver,
         gas,
       });
+      log.info("Transaction sent");
+      log.debug(`txHash: ${txHash}`);
 
       const etherscan =
         c.options.network === "mainnet"
