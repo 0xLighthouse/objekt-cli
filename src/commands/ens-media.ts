@@ -1,8 +1,5 @@
-import {
-  addEnsContracts,
-  ensPublicActions,
-  ensWalletActions,
-} from "@ensdomains/ensjs";
+import { addEnsContracts, ensPublicActions } from "@ensdomains/ensjs";
+import type { ChainWithEns } from "@ensdomains/ensjs/contracts";
 import { setTextRecord } from "@ensdomains/ensjs/wallet";
 import type { MediaTypeConfig } from "@objekt/shared";
 import {
@@ -290,7 +287,7 @@ export function createEnsMediaCommand({
   const CHAINS = {
     mainnet: addEnsContracts(mainnet),
     sepolia: addEnsContracts(sepolia),
-  } as const;
+  } as Record<string, ChainWithEns>;
 
   cli.command("set", {
     description: `Set the ENS ${name} text record on-chain`,
@@ -349,7 +346,7 @@ export function createEnsMediaCommand({
         account,
         chain,
         transport: http(),
-      }).extend(ensWalletActions);
+      });
 
       // Estimate gas + verify balance before sending
       const txData = setTextRecord.makeFunctionData(walletClient, {
@@ -367,7 +364,7 @@ export function createEnsMediaCommand({
       });
 
       log.info("Sending transaction...");
-      const txHash = await walletClient.setTextRecord({
+      const txHash = await setTextRecord(walletClient, {
         name: c.args.name,
         key: name,
         value: c.args.uri,

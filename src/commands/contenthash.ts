@@ -1,8 +1,5 @@
-import {
-  addEnsContracts,
-  ensPublicActions,
-  ensWalletActions,
-} from "@ensdomains/ensjs";
+import { addEnsContracts, ensPublicActions } from "@ensdomains/ensjs";
+import type { ChainWithEns } from "@ensdomains/ensjs/contracts";
 import { setContentHashRecord } from "@ensdomains/ensjs/wallet";
 import { Cli, z } from "incur";
 import { createClient, createWalletClient, http } from "viem";
@@ -12,10 +9,10 @@ import { estimateGasWithBuffer } from "../gas";
 import { createLogger } from "../log";
 import { createOwsAccount } from "../ows-account";
 
-const CHAINS = {
+const CHAINS: Record<string, ChainWithEns> = {
   mainnet: addEnsContracts(mainnet),
   sepolia: addEnsContracts(sepolia),
-} as const;
+};
 
 const contenthash = Cli.create("contenthash", {
   description: "Get or set ENS contenthash records",
@@ -114,7 +111,7 @@ contenthash.command("set", {
       account,
       chain,
       transport: http(),
-    }).extend(ensWalletActions);
+    });
 
     // Estimate gas + verify balance before sending
     const txData = setContentHashRecord.makeFunctionData(walletClient, {
@@ -131,7 +128,7 @@ contenthash.command("set", {
     });
 
     log.info("Sending transaction...");
-    const txHash = await walletClient.setContentHashRecord({
+    const txHash = await setContentHashRecord(walletClient, {
       name: c.args.name,
       contentHash: c.args.uri,
       resolverAddress: resolver,
