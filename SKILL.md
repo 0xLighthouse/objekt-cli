@@ -33,7 +33,7 @@ Wallets are encrypted locally via [Open Wallet Standard](https://openwallet.sh) 
 - **ALWAYS check pricing is current.** Arweave pricing is dynamic (AR/USD rate). Run `objekt pricing` or check `https://api.objekt.sh/pricing` before quoting any cost.
 - **Never hardcode prices.** Costs change. Always point the user to `objekt pricing` or the REST endpoint.
 - **Never expose private keys.** If the user asks, only acknowledge existence. Use OWS wallet references (`-w <WALLET>`) instead.
-- **`--storage` is required for `put`.** There is no default — the user must choose `cdn`, `ipfs`, or `arweave`.
+- **`--storage` is required for `upload`.** There is no default — the user must choose `cdn`, `ipfs`, or `arweave`.
 - **ENS operations require ownership.** The wallet must be the controller of the ENS name. Verify with `objekt ens contenthash get <name>` first if unsure.
 - **Contenthash set requires ETH for gas.** This is an on-chain transaction, not an x402 payment.
 
@@ -73,16 +73,16 @@ objekt wallet encryption-key <WALLET> --chain eip155
 
 ```bash
 # Estimate cost first (required for paid tiers)
-objekt put <file> -w <WALLET> --storage arweave --estimate
+objekt upload <file> -w <WALLET> --storage arweave --estimate
 
 # Upload to Arweave (permanent, paid via x402)
-objekt put <file> -w <WALLET> --storage arweave
+objekt upload <file> -w <WALLET> --storage arweave
 
 # Upload to IPFS (12-month pin, paid via x402)
-objekt put <file> -w <WALLET> --storage ipfs
+objekt upload <file> -w <WALLET> --storage ipfs
 
 # Upload to CDN (free, 90-day edge cache)
-objekt put <file> -w <WALLET> --storage cdn
+objekt upload <file> -w <WALLET> --storage cdn
 ```
 
 **Options:**
@@ -214,14 +214,14 @@ objekt ens metadata set <name.eth> agent.json --private-key 0x... --broadcast
 
 ```bash
 # Encrypt for self
-objekt put secret.pdf -w <WALLET> --encrypt --storage ipfs
+objekt upload secret.pdf -w <WALLET> --encrypt --storage ipfs
 
 # Encrypt for self with shareable view key
-objekt put secret.pdf -w <WALLET> --encrypt --view-key --storage ipfs
+objekt upload secret.pdf -w <WALLET> --encrypt --view-key --storage ipfs
 # Returns: { ..., viewKey: "objekt_vk_..." }
 
 # Encrypt for multiple recipients (ENS names or public keys)
-objekt put secret.pdf -w <WALLET> --encrypt \
+objekt upload secret.pdf -w <WALLET> --encrypt \
   --encrypt-for vitalik.eth \
   --encrypt-for 0x02abc...def \
   --storage ipfs

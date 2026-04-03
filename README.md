@@ -41,13 +41,13 @@ objekt wallet create my-wallet
 objekt pricing
 
 # Upload a file to IPFS (default)
-objekt put ./doc.pdf -w my-wallet
+objekt upload ./doc.pdf -w my-wallet
 
 # Upload permanently to Arweave
-objekt put ./doc.pdf -w my-wallet --storage arweave
+objekt upload ./doc.pdf -w my-wallet --storage arweave
 
 # Free CDN cache
-objekt put ./doc.pdf -w my-wallet --storage cdn
+objekt upload ./doc.pdf -w my-wallet --storage cdn
 ```
 
 ---
@@ -69,7 +69,7 @@ The wallet address is a standard EVM address — the same key you use anywhere e
 ## Uploading
 
 ```bash
-objekt put <file> -w <wallet> [-k <key>] [--storage cdn|arweave|ipfs]
+objekt upload <file> -w <wallet> [-k <key>] [--storage cdn|arweave|ipfs]
 ```
 
 `file` is the path to upload. `--key` overrides the storage key (defaults to the filename).
@@ -91,7 +91,7 @@ objekt pricing
 **Estimate before committing:**
 
 ```bash
-objekt put ./doc.pdf -w my-wallet --storage arweave --estimate
+objekt upload ./doc.pdf -w my-wallet --storage arweave --estimate
 ```
 
 ---
@@ -201,7 +201,7 @@ Use `--testnet` to test against the staging environment. Payments settle in USDC
 Get testnet USDC from the [Circle faucet](https://faucet.circle.com/).
 
 ```bash
-objekt put ./doc.pdf -w my-wallet --storage ipfs --testnet
+objekt upload ./doc.pdf -w my-wallet --storage ipfs --testnet
 ```
 
 ## Networks

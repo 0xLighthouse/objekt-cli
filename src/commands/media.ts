@@ -104,7 +104,7 @@ const get = Cli.create("get", {
   },
 });
 
-const put = Cli.create("put", {
+const upload = Cli.create("upload", {
   description: "Upload a file",
   args: z.object({
     file: z.string().describe("Path to file"),
@@ -147,7 +147,7 @@ const put = Cli.create("put", {
       .meta({ count: true })
       .describe("Verbosity (-v, -vv, -vvv)"),
   }),
-  alias: { key: "k", ows: "w", v: "v" },
+  alias: { key: "k", ows: "w", storage: "s", v: "v" },
   output: z.object({
     name: z.string(),
     kind: z.string(),
@@ -337,4 +337,4 @@ const put = Cli.create("put", {
   },
 });
 
-export { get, put };
+export { get, upload };
