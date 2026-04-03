@@ -36,6 +36,7 @@ Wallets are encrypted locally via [Open Wallet Standard](https://openwallet.sh) 
 - **`--storage` is required for `upload`.** There is no default — the user must choose `cdn`, `ipfs`, or `arweave`.
 - **ENS operations require ownership.** The wallet must be the controller of the ENS name. Verify with `objekt ens contenthash get <name>` first if unsure.
 - **Contenthash set requires ETH for gas.** This is an on-chain transaction, not an x402 payment.
+- **On-chain commands need an RPC.** Public RPCs are unreliable. Set `ETH_RPC_URL` or pass `--rpc <url>` to use a private provider (e.g. [Goldsky Edge](https://goldsky.com/products/edge)).
 
 ## Quickstart
 
