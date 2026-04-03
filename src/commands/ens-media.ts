@@ -3,6 +3,7 @@ import {
   ensPublicActions,
   ensWalletActions,
 } from "@ensdomains/ensjs";
+import { setTextRecord } from "@ensdomains/ensjs/wallet";
 import type { MediaTypeConfig } from "@objekt/shared";
 import {
   ENCRYPTED_MIME,
@@ -25,6 +26,7 @@ import {
 } from "../crypto";
 import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
+import { estimateGasWithBuffer } from "../gas";
 import { createLogger, formatSize } from "../log";
 import { createOwsAccount } from "../ows-account";
 import { signUpload } from "../sign";
@@ -337,11 +339,26 @@ export function createEnsMediaCommand({
         transport: http(),
       }).extend(ensWalletActions);
 
+      // Estimate gas + verify balance before sending
+      const txData = setTextRecord.makeFunctionData(walletClient, {
+        name: c.args.name,
+        key: name,
+        value: c.args.uri,
+        resolverAddress: resolver,
+      });
+      const gas = await estimateGasWithBuffer({
+        chain,
+        account: account.address,
+        to: txData.to,
+        data: txData.data,
+      });
+
       const txHash = await walletClient.setTextRecord({
         name: c.args.name,
         key: name,
         value: c.args.uri,
         resolverAddress: resolver,
+        gas,
       });
 
       const etherscan =

@@ -3,10 +3,12 @@ import {
   ensPublicActions,
   ensWalletActions,
 } from "@ensdomains/ensjs";
+import { setContentHashRecord } from "@ensdomains/ensjs/wallet";
 import { Cli, z } from "incur";
 import { createClient, createWalletClient, http } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
+import { estimateGasWithBuffer } from "../gas";
 import { createOwsAccount } from "../ows-account";
 
 const CHAINS = {
@@ -101,10 +103,24 @@ contenthash.command("set", {
       transport: http(),
     }).extend(ensWalletActions);
 
+    // Estimate gas + verify balance before sending
+    const txData = setContentHashRecord.makeFunctionData(walletClient, {
+      name: c.args.name,
+      contentHash: c.args.uri,
+      resolverAddress: resolver,
+    });
+    const gas = await estimateGasWithBuffer({
+      chain,
+      account: account.address,
+      to: txData.to,
+      data: txData.data,
+    });
+
     const txHash = await walletClient.setContentHashRecord({
       name: c.args.name,
       contentHash: c.args.uri,
       resolverAddress: resolver,
+      gas,
     });
 
     const etherscan =
