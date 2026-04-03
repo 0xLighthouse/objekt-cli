@@ -19,10 +19,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.1
 
-      - name: Upgrade npm for Trusted Publishing
-        run: npm install -g npm@11 --force
+      - name: Update npm (required for Trusted Publishing)
+        run: npm install -g npm@latest
 
       - name: Download release tarball
         run: gh release download "${{ github.event.release.tag_name }}" --pattern "*.tgz"
