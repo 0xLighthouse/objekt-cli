@@ -52,7 +52,7 @@ export function signUpload({
     message: { upload: uploadType, expiry, name, hash },
   };
 
-  const result = owsSignTypedData(wallet, "evm", JSON.stringify(typedData));
+  const result = owsSignTypedData(wallet, "ethereum", JSON.stringify(typedData));
   const sig = result.signature.startsWith("0x")
     ? (result.signature as Hex)
     : (`0x${result.signature}` as Hex);
@@ -92,7 +92,7 @@ export function signRevealDeposit({
     message: { action: "deposit", ensName, keyName, commitment, price, expiry },
   };
 
-  const result = owsSignTypedData(wallet, "evm", JSON.stringify(typedData));
+  const result = owsSignTypedData(wallet, "ethereum", JSON.stringify(typedData));
   const sig = result.signature.startsWith("0x")
     ? (result.signature as Hex)
     : (`0x${result.signature}` as Hex);
@@ -128,7 +128,7 @@ export function signRevealRemove({
     message: { action: "remove", ensName, keyName, expiry },
   };
 
-  const result = owsSignTypedData(wallet, "evm", JSON.stringify(typedData));
+  const result = owsSignTypedData(wallet, "ethereum", JSON.stringify(typedData));
   const sig = result.signature.startsWith("0x")
     ? (result.signature as Hex)
     : (`0x${result.signature}` as Hex);

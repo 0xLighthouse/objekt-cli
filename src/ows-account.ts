@@ -33,7 +33,7 @@ export function createOwsAccount(wallet: string): LocalAccount {
               ? message.raw
               : Buffer.from(message.raw).toString("hex")
             : String(message);
-      const result = owsSignMessage(wallet, "evm", msg);
+      const result = owsSignMessage(wallet, "ethereum", msg);
       return (
         result.signature.startsWith("0x")
           ? result.signature
@@ -44,7 +44,7 @@ export function createOwsAccount(wallet: string): LocalAccount {
     async signTransaction(transaction, options) {
       const serializer = options?.serializer ?? serializeTransaction;
       const serialized = serializer(transaction);
-      const result = owsSignTransaction(wallet, "evm", serialized);
+      const result = owsSignTransaction(wallet, "ethereum", serialized);
       const sig = result.signature.startsWith("0x")
         ? result.signature
         : `0x${result.signature}`;
@@ -89,7 +89,7 @@ export function createOwsAccount(wallet: string): LocalAccount {
       };
       const result = owsSignTypedData(
         wallet,
-        "evm",
+        "ethereum",
         JSON.stringify(withDomain, (_key, value) =>
           typeof value === "bigint" ? value.toString() : value,
         ),

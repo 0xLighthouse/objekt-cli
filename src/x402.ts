@@ -58,7 +58,7 @@ function createOwsSigner(wallet: string) {
       };
       const result = owsSignTypedData(
         wallet,
-        "evm",
+        "ethereum",
         JSON.stringify(withDomain),
       );
       return result.signature.startsWith("0x")
