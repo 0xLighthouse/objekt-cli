@@ -4,11 +4,12 @@ import {
   ensWalletActions,
 } from "@ensdomains/ensjs";
 import { Cli, z } from "incur";
-import { createClient, createWalletClient, http } from "viem";
+import { createClient, createWalletClient } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
 import { createLogger } from "../log";
 import { createOwsAccount } from "../ows-account";
+import { rpcTransport } from "../rpc";
 
 const CHAINS = {
   mainnet: addEnsContracts(mainnet),
@@ -38,10 +39,10 @@ contenthash.command("get", {
   }),
   async run(c) {
     const chain = CHAINS[c.options.network];
-    const rpcUrl = c.options.rpc ?? process.env.ETH_RPC_URL;
+    const rpcUrl = c.options.rpc ?? process.env.RPC_URL_1;
     const client = createClient({
       chain,
-      transport: http(rpcUrl),
+      transport: rpcTransport(rpcUrl),
     }).extend(ensPublicActions);
 
     const result = await client.getContentHashRecord({
@@ -86,15 +87,10 @@ contenthash.command("set", {
   async run(c) {
     const chain = CHAINS[c.options.network];
     const log = createLogger(c.options.v);
-    const rpcUrl = c.options.rpc ?? process.env.ETH_RPC_URL;
+    const rpcUrl = c.options.rpc ?? process.env.RPC_URL_1;
     const account = createOwsAccount(c.options.ows);
 
-    if (!rpcUrl) {
-      log.info(
-        "Warning: Using default public RPC. Pass --rpc <url> or set ETH_RPC_URL for reliability.",
-      );
-    }
-    log.debug(`RPC: ${rpcUrl ?? "default public"}`);
+    log.debug(`RPC: ${rpcUrl ?? "public fallback"}`);
 
     log.info(`Setting contenthash for ${c.args.name}`);
     log.detail(`URI: ${c.args.uri}`);
@@ -104,7 +100,7 @@ contenthash.command("set", {
     // Public client for reading resolver address
     const publicClient = createClient({
       chain,
-      transport: http(rpcUrl),
+      transport: rpcTransport(rpcUrl),
     }).extend(ensPublicActions);
 
     // Get resolver address
@@ -122,7 +118,7 @@ contenthash.command("set", {
     const walletClient = createWalletClient({
       account,
       chain,
-      transport: http(rpcUrl),
+      transport: rpcTransport(rpcUrl),
     }).extend(ensWalletActions);
 
     log.info("Sending transaction...");

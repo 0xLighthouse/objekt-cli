@@ -1,7 +1,9 @@
 import { addEnsContracts, ensPublicActions } from "@ensdomains/ensjs";
 import { CurveId } from "@objekt.sh/ecies";
-import { createClient, http } from "viem";
+import { createClient } from "viem";
 import { mainnet, sepolia } from "viem/chains";
+
+import { rpcTransport } from "../rpc";
 
 const CHAINS = {
   mainnet: addEnsContracts(mainnet),
@@ -60,7 +62,7 @@ async function resolveEnsEncryptionKey(
   network: "mainnet" | "sepolia",
 ): Promise<ResolvedRecipient> {
   const chain = CHAINS[network];
-  const client = createClient({ chain, transport: http() }).extend(
+  const client = createClient({ chain, transport: rpcTransport() }).extend(
     ensPublicActions,
   );
 

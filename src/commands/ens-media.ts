@@ -12,7 +12,7 @@ import {
   parseViewKey,
 } from "@objekt.sh/ecies";
 import { Cli, z } from "incur";
-import { createClient, createWalletClient, http } from "viem";
+import { createClient, createWalletClient } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 
 import { getEnsApiUrl } from "../api";
@@ -27,6 +27,7 @@ import { estimateUpload } from "../estimate";
 import { readMediaFile } from "../file";
 import { createLogger, formatSize } from "../log";
 import { createOwsAccount } from "../ows-account";
+import { rpcTransport } from "../rpc";
 import { signUpload } from "../sign";
 import { createPaymentFetch, extractPaymentReceipt } from "../x402";
 
@@ -322,14 +323,8 @@ export function createEnsMediaCommand({
     async run(c) {
       const chain = CHAINS[c.options.network];
       const log = createLogger(c.options.v);
-      const rpcUrl = c.options.rpc ?? process.env.ETH_RPC_URL;
+      const rpcUrl = c.options.rpc ?? process.env.RPC_URL_1;
       const account = createOwsAccount(c.options.ows);
-
-      if (!rpcUrl) {
-        log.info(
-          "Warning: Using default public RPC. Pass --rpc <url> or set ETH_RPC_URL for reliability.",
-        );
-      }
 
       log.info(`Setting ${name} text record for ${c.args.name}`);
       log.detail(`Value: ${c.args.uri}`);
@@ -339,7 +334,7 @@ export function createEnsMediaCommand({
 
       const publicClient = createClient({
         chain,
-        transport: http(rpcUrl),
+        transport: rpcTransport(rpcUrl),
       }).extend(ensPublicActions);
 
       const resolver = await publicClient.getResolver({ name: c.args.name });
@@ -355,7 +350,7 @@ export function createEnsMediaCommand({
       const walletClient = createWalletClient({
         account,
         chain,
-        transport: http(rpcUrl),
+        transport: rpcTransport(rpcUrl),
       }).extend(ensWalletActions);
 
       log.info("Sending transaction...");
